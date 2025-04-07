@@ -50,6 +50,9 @@ pub struct RegisterRequest {
     full_name: String,
 }
 
+// 
+
+
 pub async fn login(
     db: web::Data<DatabaseConnection>,
     credentials: web::Json<LoginRequest>,
@@ -61,6 +64,7 @@ pub async fn login(
         .await
         .map_err(|_| AppError::InternalServerError)?;
 
+    // Check if the user is found
     if let Some(user) = user {
         // Verify password
         if verify(&credentials.password, &user.password_hash)
@@ -84,9 +88,11 @@ pub async fn login(
             Err(AppError::Unauthorized)
         }
     } else {
-        Err(AppError::Unauthorized)
+        Err(AppError::Unauthorized) // Return an Unauthorized error if user is not found
     }
 }
+
+
 
 pub async fn register(
     db: web::Data<DatabaseConnection>,
@@ -116,6 +122,8 @@ pub async fn register(
 
     Ok(HttpResponse::Created().finish())
 }
+
+
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Claims {

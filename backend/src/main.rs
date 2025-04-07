@@ -1,7 +1,7 @@
 use actix_web::{web, App, HttpServer};
+use sea_orm::{Database, DatabaseConnection};
+use std::sync::Arc;
 use actix_web_httpauth::middleware::HttpAuthentication;
-use sea_orm::Database;
-use std::env;
 
 mod config;
 mod handlers;
@@ -9,33 +9,44 @@ mod middleware;
 mod models;
 mod services;
 
+use handlers::auth::{login, register};
+use handlers::pdf::{upload_pdf, download_pdf};
+use middleware::auth::validator;
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     dotenv::dotenv().ok();
-
-    // Initialize logging
     tracing_subscriber::fmt::init();
 
-    // Database connection
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    let pool = Database::connect(&database_url)
+    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+
+    //Get SeaORM database connection
+    let pool: DatabaseConnection = Database::connect(&database_url)
         .await
         .expect("Failed to connect to database");
 
-    HttpServer::new(move || {
-        let auth = HttpAuthentication::bearer(middleware::auth::validator);
+    // Wrap in Actix's `web::Data` to share across workers
+    let pool_data = web::Data::new(pool);
 
-        App::new().app_data(web::Data::new(pool.clone())).service(
-            web::scope("/api")
-                .service(
-                    web::scope("/auth")
-                        .route("/login", web::post().to(handlers::auth::login))
-                        .route("/register", web::post().to(handlers::auth::register)),
-                )
-                .service(
-                    web::scope("").wrap(auth), // Protected routes will go here
-                ),
-        )
+    HttpServer::new(move || {
+        let auth = HttpAuthentication::bearer(validator);
+
+        App::new()
+            .app_data(pool_data.clone()) //  Correct usage
+            .service(
+                web::scope("/api")
+                    .service(
+                        web::scope("/auth")
+                            .route("/login", web::post().to(login))
+                            .route("/register", web::post().to(register)),
+                    )
+                    .service(
+                        web::scope("")
+                            .wrap(auth)
+                            .route("/upload", web::post().to(upload_pdf))
+                            .route("/download/{filename}", web::get().to(download_pdf)),
+                    ),
+            )
     })
     .bind(("127.0.0.1", 8080))?
     .run()

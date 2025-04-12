@@ -1,5 +1,5 @@
 -- Create users table
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     email VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
@@ -11,7 +11,7 @@ CREATE TABLE users (
 );
 
 -- Create subscriptions table
-CREATE TABLE subscriptions (
+CREATE TABLE IF NOT EXISTS subscriptions (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id),
     stripe_customer_id VARCHAR(255) NOT NULL,
@@ -23,7 +23,7 @@ CREATE TABLE subscriptions (
 );
 
 -- Create pdfs table
-CREATE TABLE pdfs (
+CREATE TABLE IF NOT EXISTS pdfs (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id),
     title VARCHAR(255) NOT NULL,
@@ -35,7 +35,20 @@ CREATE TABLE pdfs (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Create documents table
+CREATE TABLE IF NOT EXISTS documents (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    filename VARCHAR(255) NOT NULL,
+    file_size BIGINT NOT NULL,
+    mime_type VARCHAR(127) NOT NULL,
+    s3_key VARCHAR(255) NOT NULL UNIQUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Add indexes
-CREATE INDEX idx_user_email ON users(email);
-CREATE INDEX idx_pdf_user ON pdfs(user_id);
-CREATE INDEX idx_subscription_user ON subscriptions(user_id); 
+CREATE INDEX IF NOT EXISTS idx_user_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_pdf_user ON pdfs(user_id);
+CREATE INDEX IF NOT EXISTS idx_subscription_user ON subscriptions(user_id);
+CREATE INDEX IF NOT EXISTS idx_documents_user_id ON documents(user_id); 

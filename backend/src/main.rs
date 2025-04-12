@@ -1,7 +1,6 @@
 use crate::services::storage::StorageService;
 use actix_web::{web, App, HttpServer};
 use actix_web_httpauth::middleware::HttpAuthentication;
-use sea_orm::Database;
 use std::env;
 
 mod config;
@@ -17,11 +16,11 @@ async fn main() -> std::io::Result<()> {
     // Initialize logging
     tracing_subscriber::fmt::init();
 
-    // Database connection
+    // Database connection and initialization
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    let pool = Database::connect(&database_url)
+    let pool = config::database::initialize_database(&database_url)
         .await
-        .expect("Failed to connect to database");
+        .expect("Failed to initialize database");
 
     // Initialize storage service
     let storage = StorageService::new(
@@ -30,6 +29,8 @@ async fn main() -> std::io::Result<()> {
     )
     .await
     .expect("Failed to initialize storage service");
+
+    println!("Starting server at http://0.0.0.0:8080");
 
     HttpServer::new(move || {
         let auth = HttpAuthentication::bearer(middleware::auth::validator);
@@ -61,7 +62,7 @@ async fn main() -> std::io::Result<()> {
                     ),
             )
     })
-    .bind(("127.0.0.1", 8080))?
+    .bind("0.0.0.0:8080")?
     .run()
     .await
 }

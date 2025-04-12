@@ -8,6 +8,7 @@ use actix_web::{web, Error, HttpResponse};
 use futures_util::TryStreamExt;
 use sanitize_filename::sanitize;
 use sea_orm::{ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
+use std::path::Path;
 use uuid::Uuid;
 
 pub async fn upload_document(
@@ -29,7 +30,14 @@ pub async fn upload_document(
             .map(|t| t.to_string())
             .unwrap_or_else(|| "application/octet-stream".to_string());
 
-        let s3_key = format!("{}/{}", user.id, Uuid::new_v4());
+        // Get the file extension
+        let extension = Path::new(&filename)
+            .extension()
+            .and_then(|ext| ext.to_str())
+            .unwrap_or("");
+
+        // Include the file extension in the S3 key
+        let s3_key = format!("{}/{}.{}", user.id, Uuid::new_v4(), extension);
 
         // Read the file data into a buffer
         let mut size: i64 = 0;

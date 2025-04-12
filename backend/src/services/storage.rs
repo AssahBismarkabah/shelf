@@ -18,6 +18,9 @@ pub struct StorageService {
 
 impl StorageService {
     pub async fn new(endpoint: String, bucket: String) -> Result<Self, Box<dyn Error>> {
+        println!("Initializing storage service with endpoint: {}", endpoint);
+        println!("Using bucket: {}", bucket);
+
         let config = aws_config::defaults(aws_config::BehaviorVersion::latest())
             .endpoint_url(endpoint)
             .region(Region::new("us-east-1"))
@@ -38,12 +41,19 @@ impl StorageService {
     where
         R: AsyncRead + Send + Unpin + 'static,
     {
+        println!("Uploading file to S3: {}", key);
+        println!("Content type: {}", content_type);
+        println!("Bucket: {}", self.bucket);
+
         let mut buffer = Vec::new();
         tokio::io::copy(&mut body, &mut buffer).await?;
 
+        println!("File size: {} bytes", buffer.len());
+
         let body = ByteStream::from(buffer);
 
-        self.client
+        let result = self
+            .client
             .put_object()
             .bucket(&self.bucket)
             .key(key)
@@ -52,6 +62,8 @@ impl StorageService {
             .send()
             .await?;
 
+        println!("Upload result: {:?}", result);
+
         Ok(())
     }
 
@@ -59,6 +71,9 @@ impl StorageService {
         &self,
         key: &str,
     ) -> Result<Pin<Box<dyn Stream<Item = Result<Bytes, IoError>> + Send>>, Box<dyn Error>> {
+        println!("Downloading file from S3: {}", key);
+        println!("Bucket: {}", self.bucket);
+
         let result = self
             .client
             .get_object()
@@ -66,6 +81,8 @@ impl StorageService {
             .key(key)
             .send()
             .await?;
+
+        println!("Download result: {:?}", result);
 
         let async_read = result.body.into_async_read();
         let buffered_reader = tokio::io::BufReader::new(async_read);
@@ -75,12 +92,18 @@ impl StorageService {
     }
 
     pub async fn delete_file(&self, key: &str) -> Result<(), Box<dyn Error>> {
-        self.client
+        println!("Deleting file from S3: {}", key);
+        println!("Bucket: {}", self.bucket);
+
+        let result = self
+            .client
             .delete_object()
             .bucket(&self.bucket)
             .key(key)
             .send()
             .await?;
+
+        println!("Delete result: {:?}", result);
 
         Ok(())
     }

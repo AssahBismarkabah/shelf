@@ -43,11 +43,11 @@ show_minio_instructions() {
 # Function to register a new user
 register() {
     print_header "User Registration"
-    print_info "Registering new user: test@example.com"
+    print_info "Registering new user: test@example123.com"
     
     REGISTER_RESPONSE=$(curl -s -X POST "$BASE_URL/auth/register" \
         -H "Content-Type: application/json" \
-        -d '{"email":"test@example.com","password":"test123","full_name":"Test User"}')
+        -d '{"email":"test@example123.com","password":"test123","full_name":"Test User"}')
     
     echo "Register response: $REGISTER_RESPONSE"
     print_result "User registration"
@@ -56,11 +56,11 @@ register() {
 # Function to login and get token
 login() {
     print_header "User Login"
-    print_info "Logging in as: test@example.com"
+    print_info "Logging in as: test@example123.com"
     
     LOGIN_RESPONSE=$(curl -s -X POST "$BASE_URL/auth/login" \
         -H "Content-Type: application/json" \
-        -d '{"email":"test@example.com","password":"test123"}')
+        -d '{"email":"test@example123.com","password":"test123"}')
     
     echo "Login response: $LOGIN_RESPONSE"
     
@@ -95,8 +95,11 @@ upload() {
     fi
     
     print_info "Sending request to $BASE_URL/documents"
+    
+    # Use -v for verbose output and save both stdout and stderr
     UPLOAD_RESPONSE=$(curl -v -X POST "$BASE_URL/documents" \
         -H "Authorization: Bearer $TOKEN" \
+        -H "Content-Type: multipart/form-data" \
         -F "file=@test.pdf" 2>&1)
     
     echo "Upload response: $UPLOAD_RESPONSE"
@@ -105,6 +108,13 @@ upload() {
     if echo "$UPLOAD_RESPONSE" | grep -q "error"; then
         echo -e "${RED}Upload failed with error${NC}"
         return 1
+    fi
+    
+    # Try to extract document ID from response
+    DOC_ID=$(echo "$UPLOAD_RESPONSE" | grep -o '"id":"[^"]*"' | cut -d'"' -f4)
+    if [ ! -z "$DOC_ID" ]; then
+        echo "$DOC_ID" > .doc_id
+        print_info "Document ID saved: $DOC_ID"
     fi
     
     print_result "Document upload"

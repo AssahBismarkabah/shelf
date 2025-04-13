@@ -1,5 +1,5 @@
 use crate::services::storage::StorageService;
-use actix_web::{web, App, HttpServer};
+use actix_web::{web, App, HttpResponse, HttpServer};
 use actix_web_httpauth::middleware::HttpAuthentication;
 use sea_orm::Database;
 use std::env;
@@ -9,6 +9,13 @@ mod handlers;
 mod middleware;
 mod models;
 mod services;
+
+async fn health_check() -> HttpResponse {
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "ok",
+        "timestamp": chrono::Utc::now().to_rfc3339()
+    }))
+}
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -47,6 +54,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(db.clone()))
             .app_data(web::Data::new(document_service.clone()))
             .app_data(web::Data::new(subscription_service.clone()))
+            .route("/health", web::get().to(health_check))
             .service(
                 web::scope("/api")
                     .service(

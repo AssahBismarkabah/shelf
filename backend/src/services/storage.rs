@@ -22,7 +22,7 @@ impl StorageService {
         println!("Initializing storage service with endpoint: {}", endpoint);
         println!("Using bucket: {}", bucket);
 
-        let config = aws_config::from_env()
+        let config = aws_config::defaults(aws_config::BehaviorVersion::latest())
             .endpoint_url(endpoint)
             .region(Region::new("us-east-1"))
             .load()

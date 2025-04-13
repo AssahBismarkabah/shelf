@@ -158,3 +158,23 @@ Optimize cloud costs
 
 This project aims to provide a scalable, secure, and user-friendly platform for managing and reading PDFs online. By leveraging Rust for backend efficiency and React for frontend responsiveness, the platform ensures an optimal experience for users while maintaining data security, ease of use, and financial sustainability through a subscription model.
 
+---
+
+## Database Example Queries (via PgAdmin)
+
+Here are sample queries to inspect data from the key tables in the Shelf database:
+
+### 🔍 Query the `users` Table
+
+```sql
+SELECT id, email, full_name, is_admin, is_active, created_at, updated_at
+FROM users;
+```
+
+
+- Query the documents Table
+```sql
+SELECT id, user_id, filename, file_size, mime_type, s3_key, created_at, updated_at
+FROM documents;
+```
+

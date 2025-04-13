@@ -91,7 +91,7 @@ upload() {
     # Create a test file if it doesn't exist
     if [ ! -f test.pdf ]; then
         print_info "Creating test PDF file"
-        echo "This is a test PDF file" > test.pdf
+        echo "This is a test PDF file" > test1.pdf
     fi
     
     print_info "Sending request to $BASE_URL/documents"

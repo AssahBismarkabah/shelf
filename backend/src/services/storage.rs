@@ -1,4 +1,5 @@
 use aws_config::Region;
+use aws_sdk_s3::config::Builder;
 use aws_sdk_s3::primitives::ByteStream;
 use aws_sdk_s3::Client;
 use bytes::Bytes;
@@ -8,7 +9,7 @@ use std::io::Error as IoError;
 use std::pin::Pin;
 use std::sync::Arc;
 use tokio::io::AsyncRead;
-use tokio_util::io::ReaderStream; // Add this for ReaderStream // Ensure Bytes is imported
+use tokio_util::io::ReaderStream;
 
 #[derive(Clone)]
 pub struct StorageService {
@@ -21,15 +22,52 @@ impl StorageService {
         println!("Initializing storage service with endpoint: {}", endpoint);
         println!("Using bucket: {}", bucket);
 
-        let config = aws_config::defaults(aws_config::BehaviorVersion::latest())
+        let config = aws_config::from_env()
             .endpoint_url(endpoint)
             .region(Region::new("us-east-1"))
             .load()
             .await;
 
-        let client = Arc::new(Client::new(&config));
+        let s3_config = Builder::from(&config).force_path_style(true).build();
 
-        Ok(Self { client, bucket })
+        let client = Arc::new(Client::from_conf(s3_config));
+
+        // Ensure bucket exists
+        let service = Self {
+            client,
+            bucket: bucket.clone(),
+        };
+        service.ensure_bucket_exists().await?;
+
+        Ok(service)
+    }
+
+    async fn ensure_bucket_exists(&self) -> Result<(), Box<dyn Error>> {
+        println!("Checking if bucket exists: {}", self.bucket);
+
+        // Try to get bucket location to check if it exists
+        match self
+            .client
+            .get_bucket_location()
+            .bucket(&self.bucket)
+            .send()
+            .await
+        {
+            Ok(_) => {
+                println!("Bucket already exists: {}", self.bucket);
+                Ok(())
+            }
+            Err(_) => {
+                println!("Creating bucket: {}", self.bucket);
+                self.client
+                    .create_bucket()
+                    .bucket(&self.bucket)
+                    .send()
+                    .await?;
+                println!("Bucket created successfully: {}", self.bucket);
+                Ok(())
+            }
+        }
     }
 
     pub async fn upload_file<R>(

@@ -9,6 +9,7 @@ NC='\033[0m' # No Color
 
 # Base URL
 BASE_URL="http://localhost:8080/api"
+MINIO_UI_URL="http://localhost:9001"
 
 # Function to print section headers
 print_header() {
@@ -29,15 +30,26 @@ print_result() {
     fi
 }
 
+# Function to show MinIO instructions
+show_minio_instructions() {
+    print_info "To view changes in MinIO UI:"
+    print_info "1. Open MinIO Console at: $MINIO_UI_URL"
+    print_info "2. Login with your MinIO credentials"
+    print_info "3. Navigate to the 'pdfshelf' bucket"
+    print_info "4. Look for a folder with the user ID (likely '1')"
+    print_info "5. You should see your uploaded files here"
+}
+
 # Function to register a new user
 register() {
     print_header "User Registration"
     print_info "Registering new user: test@example.com"
     
-    curl -s -X POST "$BASE_URL/auth/register" \
+    REGISTER_RESPONSE=$(curl -s -X POST "$BASE_URL/auth/register" \
         -H "Content-Type: application/json" \
-        -d '{"email":"test@example.com","password":"test123","full_name":"Test User"}'
+        -d '{"email":"test@example.com","password":"test123","full_name":"Test User"}')
     
+    echo "Register response: $REGISTER_RESPONSE"
     print_result "User registration"
 }
 
@@ -46,23 +58,14 @@ login() {
     print_header "User Login"
     print_info "Logging in as: test@example.com"
     
-    LOGIN_RESPONSE=$(curl -v -X POST "$BASE_URL/auth/login" \
+    LOGIN_RESPONSE=$(curl -s -X POST "$BASE_URL/auth/login" \
         -H "Content-Type: application/json" \
-        -d '{"email":"test@example.com","password":"test123"}' 2>&1)
+        -d '{"email":"test@example.com","password":"test123"}')
     
-    echo "Full response:"
-    echo "$LOGIN_RESPONSE"
+    echo "Login response: $LOGIN_RESPONSE"
     
-    # Extract token from the response body (last line)
-    RESPONSE_BODY=$(echo "$LOGIN_RESPONSE" | grep -v "^*" | grep -v "^>" | grep -v "^<" | grep -v "^}" | tail -n 1)
-    echo "Response body: $RESPONSE_BODY"
-    
-    if [ -z "$RESPONSE_BODY" ]; then
-        echo -e "${RED}Empty response from server${NC}"
-        return 1
-    fi
-    
-    TOKEN=$(echo "$RESPONSE_BODY" | jq -r '.token')
+    # Extract token
+    TOKEN=$(echo "$LOGIN_RESPONSE" | jq -r '.token')
     if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
         echo -e "${RED}Failed to extract token from response${NC}"
         return 1
@@ -82,6 +85,7 @@ upload() {
     fi
     
     TOKEN=$(cat .token)
+    print_info "Using token: ${TOKEN:0:20}..."
     print_info "Uploading test document"
     
     # Create a test file if it doesn't exist
@@ -90,12 +94,21 @@ upload() {
         echo "This is a test PDF file" > test.pdf
     fi
     
-    UPLOAD_RESPONSE=$(curl -s -X POST "$BASE_URL/documents" \
+    print_info "Sending request to $BASE_URL/documents"
+    UPLOAD_RESPONSE=$(curl -v -X POST "$BASE_URL/documents" \
         -H "Authorization: Bearer $TOKEN" \
-        -F "file=@test.pdf")
+        -F "file=@test.pdf" 2>&1)
     
     echo "Upload response: $UPLOAD_RESPONSE"
+    
+    # Check if the response contains an error
+    if echo "$UPLOAD_RESPONSE" | grep -q "error"; then
+        echo -e "${RED}Upload failed with error${NC}"
+        return 1
+    fi
+    
     print_result "Document upload"
+    show_minio_instructions
 }
 
 # Function to list documents
@@ -178,6 +191,9 @@ delete() {
     
     echo "Delete response: $DELETE_RESPONSE"
     print_result "Document deletion"
+    
+    # Show MinIO instructions after deletion
+    show_minio_instructions
 }
 
 # Main script

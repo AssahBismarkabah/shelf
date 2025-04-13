@@ -1,33 +1,36 @@
+version: '3.8'
+
 services:
   postgres:
-    image: postgres:15
-    container_name: shelf-postgres-1
+    image: postgres:15-alpine
+    container_name: pdf_shelf_postgres
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: pdf_shelf
+      POSTGRES_USER: pdfshelf
+      POSTGRES_PASSWORD: pdfshelf123
+      POSTGRES_DB: pdfshelf
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U pdfshelf"]
       interval: 5s
       timeout: 5s
       retries: 5
+    command: postgres -c 'max_connections=1000'
     networks:
-      - shelf-network
+      - pdfshelf
 
   minio:
     image: minio/minio
-    container_name: shelf-minio-1
+    container_name: pdf_shelf_minio
+    environment:
+      MINIO_ROOT_USER: pdfshelf
+      MINIO_ROOT_PASSWORD: pdfshelf123
     ports:
       - "9000:9000"
       - "9001:9001"
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     volumes:
       - minio_data:/data
     command: server /data --console-address ":9001"
@@ -37,49 +40,57 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - shelf-network
+      - pdfshelf
 
   minio-init:
     image: minio/mc
+    container_name: pdf_shelf_minio_init
     depends_on:
       minio:
         condition: service_healthy
-    volumes:
-      - ./docker/minio/init.sh:/init.sh
-    entrypoint: ["sh", "/init.sh"]
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-      MINIO_BUCKET: ${MINIO_BUCKET}
+      MINIO_ROOT_USER: pdfshelf
+      MINIO_ROOT_PASSWORD: pdfshelf123
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      "mc alias set myminio http://minio:9000 pdfshelf pdfshelf123 &&
+      mc mb myminio/pdfshelf --ignore-existing &&
+      mc policy set public myminio/pdfshelf"
+    restart: on-failure
     networks:
-      - shelf-network
+      - pdfshelf
 
   api:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: shelf-api-1
+    container_name: pdf_shelf_api
+    environment:
+      DATABASE_URL: postgres://pdfshelf:pdfshelf123@postgres:5432/pdfshelf
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: pdfshelf
+      MINIO_SECRET_KEY: pdfshelf123
+      MINIO_BUCKET: pdfshelf
+      AWS_ACCESS_KEY_ID: pdfshelf
+      AWS_SECRET_ACCESS_KEY: pdfshelf123
+      AWS_REGION: us-east-1
+      AWS_ENDPOINT_URL: http://minio:9000
+      JWT_SECRET: shelf_jwt_secret_key_2024_secure_token
     ports:
       - "8080:8080"
-    environment:
-      DATABASE_URL: postgres://postgres:postgres@postgres:5432/pdf_shelf
-      MINIO_ENDPOINT: http://minio:9000
-      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
-      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
-      MINIO_BUCKET: ${MINIO_BUCKET}
-    dns:
-      - 8.8.8.8
-      - 8.8.4.4
     depends_on:
       postgres:
         condition: service_healthy
       minio:
         condition: service_healthy
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     networks:
-      - shelf-network
+      - pdfshelf
 
 networks:
-  shelf-network:
+  pdfshelf:
     driver: bridge
 
 volumes:

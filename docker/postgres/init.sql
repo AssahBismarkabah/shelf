@@ -11,12 +11,16 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- Create subscriptions table
+CREATE TYPE subscription_plan AS ENUM ('free', 'basic', 'premium');
+
 CREATE TABLE IF NOT EXISTS subscriptions (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id),
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    plan subscription_plan NOT NULL DEFAULT 'free',
     stripe_customer_id VARCHAR(255) NOT NULL,
     stripe_subscription_id VARCHAR(255) NOT NULL,
     status VARCHAR(50) NOT NULL,
+    current_period_start TIMESTAMPTZ NOT NULL,
     current_period_end TIMESTAMPTZ NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -51,4 +55,32 @@ CREATE TABLE IF NOT EXISTS documents (
 CREATE INDEX IF NOT EXISTS idx_user_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_pdf_user ON pdfs(user_id);
 CREATE INDEX IF NOT EXISTS idx_subscription_user ON subscriptions(user_id);
-CREATE INDEX IF NOT EXISTS idx_documents_user_id ON documents(user_id); 
+CREATE INDEX IF NOT EXISTS idx_documents_user_id ON documents(user_id);
+CREATE INDEX IF NOT EXISTS idx_documents_s3_key ON documents(s3_key);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_stripe_customer_id ON subscriptions(stripe_customer_id);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_stripe_subscription_id ON subscriptions(stripe_subscription_id);
+
+-- Create updated_at trigger function
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- Create triggers
+CREATE TRIGGER update_users_updated_at
+    BEFORE UPDATE ON users
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_documents_updated_at
+    BEFORE UPDATE ON documents
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_subscriptions_updated_at
+    BEFORE UPDATE ON subscriptions
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column(); 

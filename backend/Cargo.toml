@@ -26,3 +26,4 @@ jsonwebtoken = "9.3.1"
 bcrypt = "0.17.0"
 chrono = { version = "0.4", features = ["serde"] }
 bytes = "1.7.1" # Upgraded
+stripe = "0.0.5" # Added for subscription functionality

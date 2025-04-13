@@ -43,11 +43,11 @@ show_minio_instructions() {
 # Function to register a new user
 register() {
     print_header "User Registration"
-    print_info "Registering new user: test@example123.com"
+    print_info "Registering new user: test@example123333.com"
     
     REGISTER_RESPONSE=$(curl -s -X POST "$BASE_URL/auth/register" \
         -H "Content-Type: application/json" \
-        -d '{"email":"test@example123.com","password":"test123","full_name":"Test User"}')
+        -d '{"email":"test@exampleadorsys.com","password":"test123","full_name":"Test User"}')
     
     echo "Register response: $REGISTER_RESPONSE"
     print_result "User registration"

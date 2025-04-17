@@ -5,11 +5,18 @@ use sea_orm::Database;
 use std::env;
 use std::sync::Arc;
 
-mod config;
-mod handlers;
-mod middleware;
-mod models;
-mod services;
+#[allow(unused_imports)]
+use pdf_shelf::config;
+
+#[allow(unused_imports)]
+use pdf_shelf::error;
+
+use pdf_shelf::handlers;
+use pdf_shelf::middleware;
+
+#[allow(unused_imports)]
+use pdf_shelf::models;
+use pdf_shelf::services;
 
 async fn health_check() -> HttpResponse {
     HttpResponse::Ok().json(serde_json::json!({

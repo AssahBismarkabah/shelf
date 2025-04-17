@@ -7,7 +7,7 @@ use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, Qu
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use stripe::{
-    Client, CreateCustomer, CreateSubscription, Customer, CustomerId, Price, PriceId,
+    Client, CreateCustomer, CreateSubscription, Customer, Price, PriceId,
     Subscription as StripeSubscription, SubscriptionId,
 };
 
@@ -48,27 +48,6 @@ impl SubscriptionService {
             .await?
             .ok_or(AppError::NotFound("User not found".into()))?;
 
-        // Create or get Stripe customer
-        let customer = if let Some(existing_sub) = Subscription::find()
-            .filter(crate::models::subscription::Column::UserId.eq(user_id))
-            .one(&self.db)
-            .await?
-        {
-            if let Some(stripe_customer_id) = existing_sub.stripe_customer_id {
-                Customer::retrieve(
-                    &self.stripe,
-                    &CustomerId::from_str(&stripe_customer_id)
-                        .map_err(|_| AppError::InternalServerError)?,
-                    &[],
-                )
-                .await?
-            } else {
-                self.create_stripe_customer(&user.email).await?
-            }
-        } else {
-            self.create_stripe_customer(&user.email).await?
-        };
-
         // Create subscription based on plan
         let subscription = match req.plan {
             SubscriptionPlan::Free => {
@@ -76,7 +55,7 @@ impl SubscriptionService {
                 let subscription = crate::models::subscription::ActiveModel {
                     user_id: Set(user_id),
                     plan: Set(SubscriptionPlan::Free),
-                    stripe_customer_id: Set(Some(customer.id.to_string())),
+                    stripe_customer_id: Set(None),
                     stripe_subscription_id: Set(None),
                     status: Set("active".to_string()),
                     current_period_start: Set(chrono::Utc::now().into()),
@@ -88,7 +67,10 @@ impl SubscriptionService {
                 subscription.insert(&self.db).await?
             }
             _ => {
-                // For paid plans, create Stripe subscription
+                // For paid plans, create Stripe customer and subscription
+                let customer = self.create_stripe_customer(&user.email).await?;
+                let customer_id_str = customer.id.to_string();
+
                 if let Some(price_id) = req.plan.price_id() {
                     let price = Price::retrieve(
                         &self.stripe,
@@ -96,8 +78,7 @@ impl SubscriptionService {
                         &[],
                     )
                     .await?;
-                    // Store customer ID as string to avoid moving customer.id
-                    let customer_id_str = customer.id.to_string();
+
                     let subscription_params = CreateSubscription {
                         customer: customer.id,
                         items: Some(vec![stripe::CreateSubscriptionItems {
@@ -138,6 +119,7 @@ impl SubscriptionService {
                         trial_period_days: None,
                         trial_settings: None,
                     };
+
                     let stripe_subscription =
                         StripeSubscription::create(&self.stripe, subscription_params).await?;
 

@@ -3,6 +3,7 @@ use actix_web::{web, App, HttpResponse, HttpServer};
 use actix_web_httpauth::middleware::HttpAuthentication;
 use sea_orm::Database;
 use std::env;
+use std::sync::Arc;
 
 mod config;
 mod handlers;
@@ -38,12 +39,17 @@ async fn main() -> std::io::Result<()> {
         .expect("Failed to initialize storage service");
 
     // Initialize document service
-    let document_service = services::document::DocumentService::new(db.clone(), storage_service);
+    let document_service = Arc::new(services::document::DocumentService::new(
+        db.clone(),
+        storage_service,
+    ));
 
     // Initialize subscription service
     let stripe_secret_key = env::var("STRIPE_SECRET_KEY").expect("STRIPE_SECRET_KEY must be set");
-    let subscription_service =
-        services::subscription::SubscriptionService::new(db.clone(), stripe_secret_key);
+    let subscription_service = Arc::new(services::subscription::SubscriptionService::new(
+        db.clone(),
+        stripe_secret_key,
+    ));
 
     println!("Starting server at http://0.0.0.0:8080");
 
@@ -52,8 +58,8 @@ async fn main() -> std::io::Result<()> {
 
         App::new()
             .app_data(web::Data::new(db.clone()))
-            .app_data(web::Data::new(document_service.clone()))
-            .app_data(web::Data::new(subscription_service.clone()))
+            .app_data(web::Data::from(document_service.clone()))
+            .app_data(web::Data::from(subscription_service.clone()))
             .route("/health", web::get().to(health_check))
             .service(
                 web::scope("/api")

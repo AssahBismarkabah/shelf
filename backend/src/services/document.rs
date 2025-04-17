@@ -1,9 +1,11 @@
+use crate::error::AppError;
 use crate::models::document::{Entity as Document, Model as DocumentModel};
-use crate::models::subscription::{Entity as Subscription, SubscriptionPlan};
-use crate::AppError;
-use sea_orm::{ActiveModelTrait, DatabaseConnection, EntityTrait, Set};
+use crate::models::subscription::Entity as Subscription;
+use sea_orm::{
+    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, PaginatorTrait, QueryFilter,
+    Set,
+};
 use serde::{Deserialize, Serialize};
-use time::OffsetDateTime;
 
 const UNLIMITED_STORAGE: i64 = i64::MAX;
 const UNLIMITED_DOCUMENTS: i32 = i32::MAX;
@@ -15,8 +17,8 @@ pub struct CreateDocumentRequest {
 }
 
 pub struct DocumentService {
-    db: DatabaseConnection,
-    storage_service: crate::services::storage::StorageService,
+    pub db: DatabaseConnection,
+    pub storage_service: crate::services::storage::StorageService,
 }
 
 impl DocumentService {
@@ -82,7 +84,7 @@ impl DocumentService {
             .await?;
 
         // Check if adding new document would exceed limit
-        if total_documents >= document_limit {
+        if total_documents >= document_limit as u64 {
             return Err(AppError::Forbidden("Document limit exceeded".into()));
         }
 
@@ -150,7 +152,7 @@ impl DocumentService {
         self.storage_service.delete_file(&document.s3_key).await?;
 
         // Delete from database
-        document.delete(&self.db).await?;
+        Document::delete_by_id(id).exec(&self.db).await?;
 
         Ok(())
     }
@@ -166,6 +168,10 @@ impl DocumentService {
         AppError,
     > {
         let document = self.get_document(id, user_id).await?;
-        self.storage_service.download_file(&document.s3_key).await
+        Ok(self
+            .storage_service
+            .download_file(&document.s3_key)
+            .await
+            .map_err(AppError::from)?)
     }
 }

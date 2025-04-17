@@ -3,27 +3,34 @@ name = "pdf-shelf"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "pdf-shelf"
+path = "src/main.rs"
+
 [dependencies]
-actix-web = "4.5.1" # Upgraded
-actix-multipart = "0.7.2" # Upgraded
+actix-web = "4.5.1"
+actix-multipart = "0.7.2"
 actix-web-httpauth = "0.8"
 sea-orm = { version = "0.12", features = ["runtime-tokio-rustls", "sqlx-postgres", "macros", "with-uuid", "with-time", "with-json"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-tokio = { version = "1.37.0", features = ["macros", "rt-multi-thread", "io-util", "time"] } # Upgraded, slimmed features
-aws-sdk-s3 = "1.44.0" # Aligned to stable release
-aws-config = "1.5.5" # Aligned
-# Removed aws-types and aws-smithy-types unless explicitly needed
-tokio-util = { version = "0.7.11", features = ["io"] } # Upgraded
-uuid = { version = "1.10.0", features = ["v4", "serde"] } # Upgraded
+tokio = { version = "1.37.0", features = ["macros", "rt-multi-thread", "io-util", "time"] }
+aws-sdk-s3 = "1.44.0"
+aws-config = "1.5.5"
+tokio-util = { version = "0.7.11", features = ["io"] }
+uuid = { version = "1.10.0", features = ["v4", "serde"] }
 futures-util = "0.3"
 sanitize-filename = "0.6.0"
 tracing = "0.1"
 tracing-subscriber = "0.3"
 dotenv = "0.15"
-derive_more = { version = "0.99.17", features = ["from", "into", "display", "error"] }
+derive_more = { version = "2.0.1", features = ["from", "into", "display", "error"] }
 jsonwebtoken = "9.3.1"
 bcrypt = "0.17.0"
 chrono = { version = "0.4", features = ["serde"] }
-bytes = "1.7.1" # Upgraded
-stripe = "0.0.5" # Added for subscription functionality
+bytes = "1.7.1"
+async-stripe = { version = "0.41.0", features = ["runtime-tokio-hyper", "webhook-events", "checkout"] }
+time = "0.3"

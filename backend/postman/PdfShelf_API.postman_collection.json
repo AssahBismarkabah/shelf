@@ -68,6 +68,66 @@
 			]
 		},
 		{
+			"name": "Payments",
+			"item": [
+				{
+					"name": "Request Payment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"amount\": \"1000\",\n    \"phone_number\": \"237699999999\",\n    \"payer_message\": \"Payment for PDF storage\",\n    \"payee_note\": \"Monthly subscription\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/payments/request",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"payments",
+								"request"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Check Payment Status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/payments/status/{{reference_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"payments",
+								"status",
+								"{{reference_id}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
 			"name": "Documents",
 			"item": [
 				{
@@ -232,6 +292,11 @@
 		},
 		{
 			"key": "document_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "reference_id",
 			"value": "",
 			"type": "string"
 		}

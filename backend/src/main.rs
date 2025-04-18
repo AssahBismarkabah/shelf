@@ -1,9 +1,12 @@
 use crate::services::storage::StorageService;
 use actix_web::{web, App, HttpServer};
 use actix_web_httpauth::middleware::HttpAuthentication;
+use handlers::payment::{check_payment_status, request_payment};
+use services::payment::PaymentService;
 use std::env;
 
 mod config;
+mod error;
 mod handlers;
 mod middleware;
 mod models;
@@ -30,6 +33,11 @@ async fn main() -> std::io::Result<()> {
     .await
     .expect("Failed to initialize storage service");
 
+    // Initialize payment service
+    let payment_service = PaymentService::new(pool.clone())
+        .await
+        .expect("Failed to initialize payment service");
+
     println!("Starting server at http://0.0.0.0:8080");
 
     HttpServer::new(move || {
@@ -38,6 +46,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .app_data(web::Data::new(pool.clone()))
             .app_data(web::Data::new(storage.clone()))
+            .app_data(web::Data::new(payment_service.clone()))
             .service(
                 web::scope("/api")
                     .service(
@@ -46,19 +55,32 @@ async fn main() -> std::io::Result<()> {
                             .route("/register", web::post().to(handlers::auth::register)),
                     )
                     .service(
-                        web::scope("").wrap(auth).service(
-                            web::scope("/documents")
-                                .route("", web::post().to(handlers::document::upload_document))
-                                .route("", web::get().to(handlers::document::list_documents))
-                                .route(
-                                    "/{id}",
-                                    web::get().to(handlers::document::download_document),
-                                )
-                                .route(
-                                    "/{id}",
-                                    web::delete().to(handlers::document::delete_document),
-                                ),
-                        ),
+                        web::scope("")
+                            .wrap(auth)
+                            .service(
+                                web::scope("/documents")
+                                    .route("", web::post().to(handlers::document::upload_document))
+                                    .route("", web::get().to(handlers::document::list_documents))
+                                    .route(
+                                        "/{id}",
+                                        web::get().to(handlers::document::download_document),
+                                    )
+                                    .route(
+                                        "/{id}",
+                                        web::delete().to(handlers::document::delete_document),
+                                    ),
+                            )
+                            .service(
+                                web::scope("/payments")
+                                    .service(
+                                        web::resource("/request")
+                                            .route(web::post().to(request_payment)),
+                                    )
+                                    .service(
+                                        web::resource("/status/{reference_id}")
+                                            .route(web::get().to(check_payment_status)),
+                                    ),
+                            ),
                     ),
             )
     })

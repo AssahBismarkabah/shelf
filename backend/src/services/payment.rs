@@ -2,6 +2,7 @@ use crate::{
     error::AppError,
     models::payment::{Entity as Payment, Model as PaymentModel, PaymentProvider, PaymentStatus},
 };
+use chrono;
 use mtnmomo::{Currency, Momo, Party, PartyIdType, RequestToPay};
 use sea_orm::prelude::Decimal;
 use sea_orm::{ActiveModelTrait, DatabaseConnection, EntityTrait, Set};
@@ -87,26 +88,50 @@ impl PaymentService {
 
         // First make the MTN MoMo API call
         let reference_id = match collection.request_to_pay(request).await {
-            Ok(ref_id) => ref_id,
+            Ok(ref_id) => {
+                println!("Received reference_id from MTN: {}", ref_id.as_string());
+                // Generate a unique reference by combining MTN's reference with a timestamp
+                let unique_ref = format!(
+                    "{}_{}",
+                    ref_id.as_string(),
+                    chrono::Utc::now().timestamp_millis()
+                );
+                println!("Generated unique reference: {}", unique_ref);
+                unique_ref
+            }
             Err(e) => {
+                println!("MTN API call failed: {}", e);
                 return Err(AppError::InternalServerError(format!(
                     "Payment request failed: {}",
                     e
-                )))
+                )));
             }
         };
+
+        // Check if reference_id already exists
+        let existing_payment = Payment::find()
+            .filter(crate::models::payment::Column::ReferenceId.eq(reference_id.clone()))
+            .one(&self.db)
+            .await?;
+
+        if existing_payment.is_some() {
+            println!("Warning: Duplicate reference_id detected: {}", reference_id);
+            return Err(AppError::BadRequest(
+                "Payment request already processed".into(),
+            ));
+        }
 
         // Only create the database record after we have a valid reference ID
         let payment = crate::models::payment::ActiveModel {
             user_id: Set(user_id),
-            reference_id: Set(reference_id.as_string()),
+            reference_id: Set(reference_id.clone()),
             amount: Set(amount_decimal.into()),
             currency: Set(currency_code),
             phone_number: Set(phone_number.clone()),
             provider: Set(PaymentProvider::MtnMomo),
             status: Set(PaymentStatus::Pending),
             provider_response: Set(Some(json!({
-                "reference_id": reference_id.as_string(),
+                "reference_id": reference_id,
                 "status": "PENDING"
             }))),
             error_message: Set(None),

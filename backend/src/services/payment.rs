@@ -5,8 +5,7 @@ use crate::{
 use chrono;
 use mtnmomo::{Currency, Momo, Party, PartyIdType, RequestToPay};
 use sea_orm::prelude::Decimal;
-use sea_orm::{ActiveModelTrait, DatabaseConnection, EntityTrait, Set};
-use sea_orm::{ColumnTrait, QueryFilter};
+use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set};
 use serde_json::json;
 use std::env;
 use std::str::FromStr;
@@ -59,7 +58,6 @@ impl PaymentService {
             return Err(AppError::BadRequest("Amount must be greater than 0".into()));
         }
 
-        // default to EUR because sandbox doesn't support XAF 🤷
         let currency_code = env::var("MTN_CURRENCY").unwrap_or_else(|_| "EUR".to_string());
         let currency = match currency_code.as_str() {
             "EUR" => Currency::EUR,
@@ -86,18 +84,16 @@ impl PaymentService {
             payee_note.clone(),
         );
 
-        // First make the MTN MoMo API call
-        let reference_id = match collection.request_to_pay(request).await {
+        let (unique_ref, mtn_ref) = match collection.request_to_pay(request).await {
             Ok(ref_id) => {
                 println!("Received reference_id from MTN: {}", ref_id.as_string());
-                // Generate a unique reference by combining MTN's reference with a timestamp
                 let unique_ref = format!(
                     "{}_{}",
                     ref_id.as_string(),
                     chrono::Utc::now().timestamp_millis()
                 );
                 println!("Generated unique reference: {}", unique_ref);
-                unique_ref
+                (unique_ref, ref_id.as_string())
             }
             Err(e) => {
                 println!("MTN API call failed: {}", e);
@@ -108,37 +104,37 @@ impl PaymentService {
             }
         };
 
-        // Check if reference_id already exists
         let existing_payment = Payment::find()
-            .filter(crate::models::payment::Column::ReferenceId.eq(reference_id.clone()))
+            .filter(crate::models::payment::Column::ReferenceId.eq(unique_ref.clone()))
             .one(&self.db)
             .await?;
 
         if existing_payment.is_some() {
-            println!("Warning: Duplicate reference_id detected: {}", reference_id);
+            println!("Warning: Duplicate reference_id detected: {}", unique_ref);
             return Err(AppError::BadRequest(
                 "Payment request already processed".into(),
             ));
         }
 
-        // Only create the database record after we have a valid reference ID
         let payment = crate::models::payment::ActiveModel {
             user_id: Set(user_id),
-            reference_id: Set(reference_id.clone()),
+            reference_id: Set(unique_ref.clone()),
+            mtn_reference_id: Set(mtn_ref.clone()),
             amount: Set(amount_decimal.into()),
             currency: Set(currency_code),
             phone_number: Set(phone_number.clone()),
             provider: Set(PaymentProvider::MtnMomo),
             status: Set(PaymentStatus::Pending),
             provider_response: Set(Some(json!({
-                "reference_id": reference_id,
+                "reference_id": unique_ref,
+                "mtn_reference_id": mtn_ref,
                 "status": "PENDING"
             }))),
             error_message: Set(None),
-            metadata: Set(json!({
+            metadata: Set(Some(json!({
                 "payer_message": payer_message,
                 "payee_note": payee_note
-            })),
+            }))),
             ..Default::default()
         };
 
@@ -161,25 +157,32 @@ impl PaymentService {
         );
 
         match collection
-            .request_to_pay_transaction_status(&reference_id)
+            .request_to_pay_transaction_status(&payment.mtn_reference_id)
             .await
         {
             Ok(status) => {
+                println!("MTN Status response: {:?}", status);
                 let mut updated_payment: crate::models::payment::ActiveModel = payment.into();
+
+                let mtn_ref = updated_payment.mtn_reference_id.clone().unwrap();
+
                 updated_payment.status = Set(match status.status.as_str() {
                     "SUCCESSFUL" => PaymentStatus::Successful,
                     "FAILED" => PaymentStatus::Failed,
                     "CANCELLED" => PaymentStatus::Cancelled,
                     _ => PaymentStatus::Pending,
                 });
+
                 updated_payment.provider_response = Set(Some(json!({
                     "reference_id": reference_id,
+                    "mtn_reference_id": mtn_ref,
                     "status": status.status
                 })));
 
                 Ok(updated_payment.update(&self.db).await?)
             }
             Err(e) => {
+                println!("MTN Status check error: {}", e);
                 let mut failed_payment: crate::models::payment::ActiveModel = payment.into();
                 failed_payment.status = Set(PaymentStatus::Failed);
                 failed_payment.error_message = Set(Some(format!("Status check failed: {}", e)));

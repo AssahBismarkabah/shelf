@@ -30,6 +30,7 @@ pub struct Model {
     pub id: i32,
     pub user_id: i32,
     pub reference_id: String,
+    pub mtn_reference_id: String,
     pub amount: Decimal,
     pub currency: String,
     pub phone_number: String,
@@ -37,7 +38,7 @@ pub struct Model {
     pub status: PaymentStatus,
     pub provider_response: Option<Json>,
     pub error_message: Option<String>,
-    pub metadata: Json,
+    pub metadata: Option<Json>,
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: DateTimeWithTimeZone,
 }

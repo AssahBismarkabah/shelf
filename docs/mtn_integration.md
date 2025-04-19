@@ -110,6 +110,10 @@ CREATE TABLE payments (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 ```
+## in production update .env with the correct  currency and also the query in the init.sql to use the correct currency
+```sql
+currency VARCHAR(3) NOT NULL DEFAULT 'EUR'
+```
 
 ## Next Steps
 

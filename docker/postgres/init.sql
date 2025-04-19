@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS payments (
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     reference_id VARCHAR(255) NOT NULL UNIQUE,
     amount DECIMAL(10,2) NOT NULL,
-    currency VARCHAR(3) NOT NULL DEFAULT 'XAF',
+    currency VARCHAR(3) NOT NULL DEFAULT 'EUR',
     phone_number VARCHAR(20) NOT NULL,
     provider payment_provider NOT NULL,
     status payment_status NOT NULL DEFAULT 'pending',

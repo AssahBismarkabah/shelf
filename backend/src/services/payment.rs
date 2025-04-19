@@ -58,6 +58,15 @@ impl PaymentService {
             return Err(AppError::BadRequest("Amount must be greater than 0".into()));
         }
 
+        // default to EUR because sandbox doesn't support XAF 🤷
+        let currency_code = env::var("MTN_CURRENCY").unwrap_or_else(|_| "EUR".to_string());
+        let currency = match currency_code.as_str() {
+            "EUR" => Currency::EUR,
+            "XAF" => Currency::XAF,
+            "XOF" => Currency::XOF,
+            _ => Currency::EUR,
+        };
+
         let collection = self.momo.collection(
             self.collection_primary_key.clone(),
             self.collection_secondary_key.clone(),
@@ -70,22 +79,36 @@ impl PaymentService {
 
         let request = RequestToPay::new(
             amount.clone(),
-            Currency::XAF,
+            currency,
             payer,
             payer_message.clone(),
             payee_note.clone(),
         );
 
-        // Save payment to DB (reference_id is generated after success)
+        // First make the MTN MoMo API call
+        let reference_id = match collection.request_to_pay(request).await {
+            Ok(ref_id) => ref_id,
+            Err(e) => {
+                return Err(AppError::InternalServerError(format!(
+                    "Payment request failed: {}",
+                    e
+                )))
+            }
+        };
+
+        // Only create the database record after we have a valid reference ID
         let payment = crate::models::payment::ActiveModel {
             user_id: Set(user_id),
-            reference_id: Set("".to_string()), // To be filled in later
+            reference_id: Set(reference_id.as_string()),
             amount: Set(amount_decimal.into()),
-            currency: Set("XAF".to_string()),
+            currency: Set(currency_code),
             phone_number: Set(phone_number.clone()),
             provider: Set(PaymentProvider::MtnMomo),
             status: Set(PaymentStatus::Pending),
-            provider_response: Set(None),
+            provider_response: Set(Some(json!({
+                "reference_id": reference_id.as_string(),
+                "status": "PENDING"
+            }))),
             error_message: Set(None),
             metadata: Set(json!({
                 "payer_message": payer_message,
@@ -94,33 +117,7 @@ impl PaymentService {
             ..Default::default()
         };
 
-        let inserted_payment = payment.insert(&self.db).await?;
-
-        match collection.request_to_pay(request).await {
-            Ok(reference_id) => {
-                let mut active_payment: crate::models::payment::ActiveModel =
-                    inserted_payment.into();
-                active_payment.reference_id = Set(reference_id.as_string());
-                active_payment.provider_response = Set(Some(json!({
-                    "reference_id": reference_id.as_string(),
-                    "status": "PENDING"
-                })));
-
-                Ok(active_payment.update(&self.db).await?)
-            }
-            Err(e) => {
-                let mut failed_payment: crate::models::payment::ActiveModel =
-                    inserted_payment.into();
-                failed_payment.status = Set(PaymentStatus::Failed);
-                failed_payment.error_message = Set(Some(e.to_string()));
-                failed_payment.update(&self.db).await?;
-
-                Err(AppError::InternalServerError(format!(
-                    "Payment request failed: {}",
-                    e
-                )))
-            }
-        }
+        Ok(payment.insert(&self.db).await?)
     }
 
     pub async fn check_payment_status(

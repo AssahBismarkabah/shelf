@@ -22,15 +22,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-# Frontend
-echo 'node_modules
-dist
-.env
-*.log
-coverage' > .gitignore
-
-# Backend (in backend directory)
-echo 'target/
-Cargo.lock
-.env
-*.log' > .gitignore

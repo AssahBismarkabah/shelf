@@ -1,6 +1,7 @@
 - [ ] Week 1: Backend & Core Infrastructure
 
   - [ ] Day 1-2: Backend Setup & Authentication
+
     - [ ] Set up Actix-web with basic routing
     - [ ] Implement PostgreSQL with SeaORM
     - [ ] Basic user authentication (email/password)
@@ -13,11 +14,18 @@
     - [ ] Basic file management operations
     - [ ] Metadata storage in PostgreSQL
 
-  - [ ] Day 5: Subscription System
+  - [ ] Day 5: Payment System Integration
 
-    - [ ] Stripe integration
-    - [ ] Basic subscription endpoints
-    - [ ] Payment webhook handlers
+    - [ ] MTN Mobile Money API integration
+      - [ ] Set up MTN MoMo sandbox environment
+      - [ ] Implement payment collection endpoints
+      - [ ] Handle payment callbacks
+      - [ ] Payment status tracking
+    - [ ] PayPal API integration (Phase 2)
+      - [ ] Set up PayPal sandbox environment
+      - [ ] Implement PayPal payment endpoints
+      - [ ] Handle PayPal webhooks
+      - [ ] Payment status tracking
 
   - [ ] Day 6-7: API Testing & Documentation
 
@@ -36,7 +44,10 @@
     - [ ] PDF.js integration
 
   - [ ] Day 10-11: User Features
-    - [ ] Subscription management UI
+
+    - [ ] Payment management UI
+      - [ ] MTN MoMo payment interface
+      - [ ] PayPal payment interface (Phase 2)
     - [ ] PDF viewer implementation
     - [ ] Basic file organization
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { 
@@ -26,6 +26,8 @@ import FileUploader from '@/components/documents/FileUploader';
 import { CommandDialog, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
 import PDFThumbnail from '@/components/documents/PDFThumbnail';
 import Footer from '@/components/layouts/Footer';
+import { useLoading } from '@/contexts/LoadingContext';
+import { CenteredSpinner } from '@/components/ui/loading-overlay';
 
 const Dashboard = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -34,10 +36,19 @@ const Dashboard = () => {
   const [showSearch, setShowSearch] = useState(false);
   const { documents, isLoading, deleteDocument } = useDocuments();
   const { toast } = useToast();
+  const { startLoading, stopLoading } = useLoading();
   
+  useEffect(() => {
+    if (isLoading) {
+      startLoading('Loading your documents...');
+    } else {
+      stopLoading();
+    }
+  }, [isLoading, startLoading, stopLoading]);
+
   const filteredDocuments = documents.filter(doc => 
     doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    doc.description.toLowerCase().includes(searchQuery.toLowerCase())
+    doc.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
   
   const handleDeleteDocument = async (id: number) => {
@@ -62,6 +73,10 @@ const Dashboard = () => {
     const i = Math.floor(Math.log(bytes) / Math.log(1024));
     return Math.round((bytes / Math.pow(1024, i)) * 100) / 100 + ' ' + sizes[i];
   };
+
+  if (isLoading) {
+    return <CenteredSpinner />;
+  }
 
   return (
     <div className="container py-8">

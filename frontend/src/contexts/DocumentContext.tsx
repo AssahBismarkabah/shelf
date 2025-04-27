@@ -8,6 +8,8 @@ interface Document {
   file_path: string;
   created_at: string;
   updated_at: string;
+  description?: string;
+  file_size?: number;
 }
 
 interface DocumentContextType {

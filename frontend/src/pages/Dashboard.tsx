@@ -32,7 +32,7 @@ const Dashboard = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showUploader, setShowUploader] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
-  const { documents, loadingDocuments, deleteDocument } = useDocuments();
+  const { documents, isLoading, deleteDocument } = useDocuments();
   const { toast } = useToast();
   
   const filteredDocuments = documents.filter(doc => 
@@ -114,7 +114,7 @@ const Dashboard = () => {
         </div>
       </div>
       
-      {loadingDocuments ? (
+      {isLoading ? (
         <div className="flex h-64 w-full items-center justify-center">
           <div className="h-16 w-16 animate-spin rounded-full border-t-4 border-b-4 border-primary"></div>
         </div>

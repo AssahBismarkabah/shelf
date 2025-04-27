@@ -16,7 +16,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onClose }) => {
   const [dragActive, setDragActive] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { uploadDocument } = useDocuments();
+  const { uploadDocument, getDocuments } = useDocuments();
   const { toast } = useToast();
   
   const handleDrag = (e: React.DragEvent) => {
@@ -82,6 +82,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onClose }) => {
       const formData = new FormData();
       formData.append('file', file);
       await uploadDocument(formData);
+      await getDocuments();
       toast({
         title: "Document uploaded",
         description: "Your document has been successfully uploaded."

@@ -42,8 +42,8 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setIsLoading(true);
     setError(null);
     try {
-      const response = await documentApi.upload(formData);
-      setDocuments(prev => [...prev, response]);
+      await documentApi.upload(formData);
+      await getDocuments();
     } catch (err) {
       setError('Failed to upload document');
       console.error(err);
@@ -85,10 +85,10 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setError(null);
     try {
       await documentApi.delete(id.toString());
-      setDocuments(prev => prev.filter(doc => doc.id !== id));
       if (currentDocument?.id === id) {
         setCurrentDocument(null);
       }
+      await getDocuments();
     } catch (err) {
       setError('Failed to delete document');
       console.error(err);

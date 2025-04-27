@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { 
@@ -83,7 +82,7 @@ const ViewPDF = () => {
             </Link>
           </Button>
           <h1 className="text-lg font-medium truncate max-w-[200px] sm:max-w-md">
-            {document.title}
+            {document.filename}
           </h1>
         </div>
         <div className="flex items-center gap-2">
@@ -165,9 +164,9 @@ const ViewPDF = () => {
               <div className="aspect-[3/4] w-full rounded-lg border bg-white shadow-lg">
                 <div className="flex h-full flex-col items-center justify-center p-8">
                   <FileText className="mb-4 h-16 w-16 text-muted-foreground/60" />
-                  <h2 className="mb-2 text-xl font-medium">{document.title}</h2>
+                  <h2 className="mb-2 text-xl font-medium">{document.filename}</h2>
                   <p className="mb-8 text-center text-muted-foreground">
-                    {document.description}
+                    {document.mime_type}
                   </p>
                   <p className="text-center text-muted-foreground">
                     Page {currentPage} of {totalPages}
@@ -187,12 +186,12 @@ const ViewPDF = () => {
             <h3 className="mb-4 font-medium">Document Information</h3>
             <div className="space-y-4">
               <div>
-                <h4 className="text-sm font-medium text-muted-foreground">Title</h4>
-                <p>{document.title}</p>
+                <h4 className="text-sm font-medium text-muted-foreground">Filename</h4>
+                <p>{document.filename}</p>
               </div>
               <div>
-                <h4 className="text-sm font-medium text-muted-foreground">Description</h4>
-                <p className="break-words">{document.description || "No description"}</p>
+                <h4 className="text-sm font-medium text-muted-foreground">Type</h4>
+                <p className="break-words">{document.mime_type}</p>
               </div>
               <div>
                 <h4 className="text-sm font-medium text-muted-foreground">Created</h4>
@@ -208,7 +207,7 @@ const ViewPDF = () => {
               </div>
               <div>
                 <h4 className="text-sm font-medium text-muted-foreground">File Location</h4>
-                <p className="break-all text-sm">{document.file_path}</p>
+                <p className="break-all text-sm">{document.s3_key}</p>
               </div>
             </div>
           </div>

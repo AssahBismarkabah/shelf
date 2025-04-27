@@ -1,5 +1,14 @@
 import axios from 'axios';
 
+interface AuthResponse {
+  token: string;
+  user: {
+    id: number;
+    email: string;
+    name: string;
+  };
+}
+
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 const api = axios.create({
@@ -52,16 +61,23 @@ api.interceptors.response.use(
 
 // Auth API
 export const authApi = {
-  login: async (email: string, password: string) => {
-    const response = await api.post('/auth/login', { email, password });
+  login: async (email: string, password: string): Promise<AuthResponse> => {
+    const response = await api.post<AuthResponse>('/auth/login', { email, password });
+    // Store auth data immediately after successful login
+    localStorage.setItem('token', response.data.token);
+    localStorage.setItem('user', JSON.stringify(response.data.user));
     return response.data;
   },
-  register: async (name: string, email: string, password: string) => {
-    const response = await api.post('/auth/register', { 
+  
+  register: async (name: string, email: string, password: string): Promise<AuthResponse> => {
+    const response = await api.post<AuthResponse>('/auth/register', { 
       email, 
       password, 
       full_name: name 
     });
+    // Store auth data immediately after successful registration
+    localStorage.setItem('token', response.data.token);
+    localStorage.setItem('user', JSON.stringify(response.data.user));
     return response.data;
   },
 };

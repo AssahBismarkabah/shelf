@@ -16,6 +16,14 @@ pub struct LoginRequest {
 #[derive(Serialize)]
 pub struct LoginResponse {
     token: String,
+    user: UserResponse,
+}
+
+#[derive(Serialize)]
+pub struct UserResponse {
+    id: i32,
+    email: String,
+    name: String,
 }
 
 #[derive(Deserialize)]
@@ -62,7 +70,16 @@ pub async fn login(
             )
             .map_err(|_| actix_web::error::ErrorInternalServerError("Token generation failed"))?;
 
-            Ok(HttpResponse::Ok().json(LoginResponse { token }))
+            let response = LoginResponse {
+                token,
+                user: UserResponse {
+                    id: user.id,
+                    email: user.email,
+                    name: user.full_name,
+                },
+            };
+
+            Ok(HttpResponse::Ok().json(response))
         } else {
             Err(actix_web::error::ErrorUnauthorized("Invalid credentials"))
         }

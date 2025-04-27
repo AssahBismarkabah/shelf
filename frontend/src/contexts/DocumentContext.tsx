@@ -4,12 +4,12 @@ import { useAuth } from './AuthContext';
 
 interface Document {
   id: number;
-  title: string;
-  file_path: string;
+  filename: string;
+  file_size: number;
+  mime_type: string;
+  s3_key: string;
   created_at: string;
   updated_at: string;
-  description?: string;
-  file_size?: number;
 }
 
 interface DocumentContextType {
@@ -17,7 +17,7 @@ interface DocumentContextType {
   currentDocument: Document | null;
   isLoading: boolean;
   error: string | null;
-  uploadDocument: (file: File, title: string, description?: string) => Promise<void>;
+  uploadDocument: (formData: FormData) => Promise<void>;
   getDocuments: () => Promise<void>;
   getDocument: (id: number) => Promise<void>;
   deleteDocument: (id: number) => Promise<void>;
@@ -38,11 +38,11 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [isAuthenticated]);
 
-  const uploadDocument = async (file: File, title: string, description?: string) => {
+  const uploadDocument = async (formData: FormData) => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await documentApi.upload(file, title, description);
+      const response = await documentApi.upload(formData);
       setDocuments(prev => [...prev, response]);
     } catch (err) {
       setError('Failed to upload document');

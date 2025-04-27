@@ -47,8 +47,7 @@ const Dashboard = () => {
   }, [isLoading, startLoading, stopLoading]);
 
   const filteredDocuments = documents.filter(doc => 
-    doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    doc.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    doc.filename.toLowerCase().includes(searchQuery.toLowerCase())
   );
   
   const handleDeleteDocument = async (id: number) => {
@@ -190,12 +189,9 @@ const Dashboard = () => {
                       to={`/view/${document.id}`}
                       className="hover:text-shelf-600 hover:underline"
                     >
-                      {document.title}
+                      {document.filename}
                     </Link>
                   </h3>
-                  <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                    {document.description}
-                  </p>
                   <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
                     <span>{formatFileSize(document.file_size)}</span>
                     <span>{format(new Date(document.created_at), 'MMM d, yyyy')}</span>
@@ -224,7 +220,7 @@ const Dashboard = () => {
                       className="border-b transition-colors hover:bg-muted/20"
                     >
                       <td className="px-4 py-3 w-[58px]">
-                        <PDFThumbnail url={document.file_path} className="h-14 w-10 object-contain shadow rounded" />
+                        <PDFThumbnail url={document.s3_key} className="h-14 w-10 object-contain shadow rounded" />
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
@@ -234,11 +230,11 @@ const Dashboard = () => {
                                 to={`/view/${document.id}`}
                                 className="hover:text-shelf-600 hover:underline"
                               >
-                                {document.title}
+                                {document.filename}
                               </Link>
                             </div>
-                            <div className="text-xs text-muted-foreground line-clamp-1">
-                              {document.description}
+                            <div className="text-xs text-muted-foreground">
+                              {formatFileSize(document.file_size)}
                             </div>
                           </div>
                         </div>
@@ -328,7 +324,7 @@ const Dashboard = () => {
                 }}
               >
                 <FileText className="mr-2 h-4 w-4" />
-                <span>{doc.title}</span>
+                <span>{doc.filename}</span>
               </CommandItem>
             ))}
           </CommandGroup>

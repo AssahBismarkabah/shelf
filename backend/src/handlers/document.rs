@@ -63,14 +63,24 @@ pub async fn upload_document(
             ..Default::default()
         };
 
-        Document::insert(document)
+        let result = Document::insert(document)
             .exec(db.get_ref())
             .await
             .map_err(|e| actix_web::error::ErrorInternalServerError(e))?;
+
+        let document = Document::find_by_id(result.last_insert_id)
+            .one(db.get_ref())
+            .await
+            .map_err(|e| actix_web::error::ErrorInternalServerError(e))?
+            .ok_or_else(|| {
+                actix_web::error::ErrorInternalServerError("Failed to fetch created document")
+            })?;
+
+        return Ok(HttpResponse::Ok().json(document));
     }
 
-    Ok(HttpResponse::Ok().json(serde_json::json!({
-        "message": "File uploaded successfully"
+    Ok(HttpResponse::BadRequest().json(serde_json::json!({
+        "error": "No file provided"
     })))
 }
 

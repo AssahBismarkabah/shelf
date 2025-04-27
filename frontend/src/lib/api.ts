@@ -84,12 +84,7 @@ export const authApi = {
 
 // Document API
 export const documentApi = {
-  upload: async (file: File, title: string, description?: string) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('title', title);
-    if (description) formData.append('description', description);
-
+  upload: async (formData: FormData) => {
     const response = await api.post('/documents', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',

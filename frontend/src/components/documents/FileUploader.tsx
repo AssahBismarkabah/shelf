@@ -1,4 +1,3 @@
-
 import { useState, useRef } from 'react';
 import { X, Upload, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,8 +12,6 @@ interface FileUploaderProps {
 }
 
 const FileUploader: React.FC<FileUploaderProps> = ({ onClose }) => {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -42,9 +39,6 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onClose }) => {
       const droppedFile = e.dataTransfer.files[0];
       if (droppedFile.type === 'application/pdf') {
         setFile(droppedFile);
-        if (!title) {
-          setTitle(droppedFile.name.replace('.pdf', ''));
-        }
       } else {
         toast({
           title: "Invalid file type",
@@ -60,9 +54,6 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onClose }) => {
       const selectedFile = e.target.files[0];
       if (selectedFile.type === 'application/pdf') {
         setFile(selectedFile);
-        if (!title) {
-          setTitle(selectedFile.name.replace('.pdf', ''));
-        }
       } else {
         toast({
           title: "Invalid file type",
@@ -85,19 +76,12 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onClose }) => {
       return;
     }
     
-    if (!title) {
-      toast({
-        title: "Title required",
-        description: "Please provide a title for your document.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
     setUploading(true);
     
     try {
-      await uploadDocument(file, title, description);
+      const formData = new FormData();
+      formData.append('file', file);
+      await uploadDocument(formData);
       toast({
         title: "Document uploaded",
         description: "Your document has been successfully uploaded."
@@ -176,28 +160,6 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onClose }) => {
                 </Button>
               </div>
             )}
-          </div>
-          
-          <div className="mb-4 space-y-2">
-            <Label htmlFor="title">Title</Label>
-            <Input 
-              id="title" 
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Document title"
-              required
-            />
-          </div>
-          
-          <div className="mb-6 space-y-2">
-            <Label htmlFor="description">Description (optional)</Label>
-            <Textarea 
-              id="description" 
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Brief description of the document"
-              rows={3}
-            />
           </div>
           
           <div className="flex justify-end gap-2">

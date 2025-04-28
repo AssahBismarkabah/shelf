@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Book } from 'lucide-react';
@@ -26,7 +25,11 @@ const Login = () => {
       });
       navigate('/dashboard');
     } catch (err) {
-      // The error is already handled in the AuthContext
+      toast({
+        title: "Login failed",
+        description: error || "An error occurred while trying to log in",
+        variant: "destructive",
+      });
     }
   };
 
@@ -60,6 +63,7 @@ const Login = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              disabled={isLoading}
             />
           </div>
           
@@ -77,6 +81,7 @@ const Login = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              disabled={isLoading}
             />
           </div>
           

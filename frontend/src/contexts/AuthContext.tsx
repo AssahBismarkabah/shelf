@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authApi } from '../lib/api';
+import axios from 'axios';
 
 interface User {
   id: number;
@@ -82,6 +83,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initializeAuth();
   }, []);
 
+  const getErrorMessage = (error: unknown): string => {
+    if (axios.isAxiosError(error)) {
+      // Try to get error message from response data
+      const responseData = error.response?.data;
+      if (responseData && typeof responseData === 'object' && 'message' in responseData) {
+        return responseData.message as string;
+      }
+      // Fallback to status text
+      if (error.response?.statusText) {
+        return error.response.statusText;
+      }
+    }
+    // Default error message
+    return error instanceof Error ? error.message : 'An unexpected error occurred';
+  };
+
   const login = async (email: string, password: string) => {
     try {
       setIsLoading(true);
@@ -89,8 +106,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const response = await authApi.login(email, password);
       setToken(response.token);
       setUser(response.user);
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('user', JSON.stringify(response.user));
     } catch (err) {
-      setError('Failed to login');
+      const errorMessage = getErrorMessage(err);
+      setError(errorMessage);
       throw err;
     } finally {
       setIsLoading(false);
@@ -104,8 +124,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const response = await authApi.register(name, email, password);
       setToken(response.token);
       setUser(response.user);
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('user', JSON.stringify(response.user));
     } catch (err) {
-      setError('Failed to register');
+      const errorMessage = getErrorMessage(err);
+      setError(errorMessage);
       throw err;
     } finally {
       setIsLoading(false);

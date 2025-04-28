@@ -32,28 +32,33 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response) {
+      // Get error message from response data
+      const errorMessage = error.response.data?.message || error.response.data?.error || error.response.statusText;
+      
       switch (error.response.status) {
         case 401:
           // Handle unauthorized (token expired/invalid)
           localStorage.removeItem('token');
           localStorage.removeItem('user');
-          window.location.href = '/login';
+          if (!window.location.pathname.includes('/login')) {
+            window.location.href = '/login';
+          }
           break;
         case 403:
-          // Handle forbidden
-          console.error('Access forbidden');
+          console.error('Access forbidden:', errorMessage);
           break;
         case 404:
-          // Handle not found
-          console.error('Resource not found');
+          console.error('Resource not found:', errorMessage);
           break;
         case 500:
-          // Handle server error
-          console.error('Server error');
+          console.error('Server error:', errorMessage);
           break;
         default:
-          console.error('An error occurred');
+          console.error('An error occurred:', errorMessage);
       }
+      
+      // Attach the error message to the error object
+      error.message = errorMessage || 'An unexpected error occurred';
     }
     return Promise.reject(error);
   }

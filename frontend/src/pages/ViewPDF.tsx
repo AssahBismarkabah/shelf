@@ -7,19 +7,17 @@ import {
   ZoomOut, 
   Download, 
   Info, 
-  ArrowLeft, 
-  FileText 
+  ArrowLeft
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useDocuments } from '@/contexts/DocumentContext';
 import { format } from 'date-fns';
+import PDFViewer from '@/components/documents/PDFViewer';
 
 const ViewPDF = () => {
   const { id } = useParams<{ id: string }>();
   const { documents } = useDocuments();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
   const [infoOpen, setInfoOpen] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
@@ -30,16 +28,7 @@ const ViewPDF = () => {
   
   useEffect(() => {
     if (!document) {
-      // If document not found, redirect to dashboard
       navigate('/dashboard');
-    } else {
-      // Simulate loading the PDF
-      const timer = setTimeout(() => {
-        setLoading(false);
-        setTotalPages(Math.floor(Math.random() * 30) + 5); // Random pages (5-35)
-      }, 1500);
-      
-      return () => clearTimeout(timer);
     }
   }, [document, navigate]);
   
@@ -59,6 +48,33 @@ const ViewPDF = () => {
     setCurrentPage(prev => Math.min(prev + 1, totalPages));
   };
   
+  const handleDownload = async () => {
+    if (!document) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/documents/${document.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) throw new Error('Download failed');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = window.document.createElement('a');
+      a.href = url;
+      a.download = document.filename;
+      window.document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      window.document.body.removeChild(a);
+    } catch (error) {
+      console.error('Download error:', error);
+    }
+  };
+  
   const formatFileSize = (bytes: number) => {
     const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
     if (bytes === 0) return '0 Byte';
@@ -67,7 +83,7 @@ const ViewPDF = () => {
   };
   
   if (!document) {
-    return null; // Will redirect in useEffect
+    return null;
   }
 
   return (
@@ -114,25 +130,25 @@ const ViewPDF = () => {
               variant="outline" 
               size="icon" 
               onClick={handlePreviousPage}
-              disabled={loading || currentPage <= 1}
+              disabled={currentPage <= 1}
             >
               <ChevronLeft className="h-4 w-4" />
               <span className="sr-only">Previous page</span>
             </Button>
             <span className="min-w-[80px] text-center text-sm">
-              {loading ? "-" : `${currentPage} / ${totalPages}`}
+              {`${currentPage} / ${totalPages}`}
             </span>
             <Button 
               variant="outline" 
               size="icon" 
               onClick={handleNextPage}
-              disabled={loading || currentPage >= totalPages}
+              disabled={currentPage >= totalPages}
             >
               <ChevronRight className="h-4 w-4" />
               <span className="sr-only">Next page</span>
             </Button>
           </div>
-          <Button variant="outline" size="icon">
+          <Button variant="outline" size="icon" onClick={handleDownload}>
             <Download className="h-4 w-4" />
             <span className="sr-only">Download</span>
           </Button>
@@ -151,33 +167,15 @@ const ViewPDF = () => {
       <div className="flex flex-1 overflow-hidden">
         {/* PDF Viewer */}
         <div className="flex-1 overflow-auto bg-muted/30 p-4">
-          {loading ? (
-            <div className="mx-auto max-w-3xl">
-              <Skeleton className="aspect-[3/4] w-full rounded-lg" />
-            </div>
-          ) : (
-            <div 
-              className="mx-auto max-w-3xl"
-              style={{ transform: `scale(${zoom})`, transformOrigin: 'top center' }}
-            >
-              {/* This would be a real PDF viewer in production */}
-              <div className="aspect-[3/4] w-full rounded-lg border bg-white shadow-lg">
-                <div className="flex h-full flex-col items-center justify-center p-8">
-                  <FileText className="mb-4 h-16 w-16 text-muted-foreground/60" />
-                  <h2 className="mb-2 text-xl font-medium">{document.filename}</h2>
-                  <p className="mb-8 text-center text-muted-foreground">
-                    {document.mime_type}
-                  </p>
-                  <p className="text-center text-muted-foreground">
-                    Page {currentPage} of {totalPages}
-                  </p>
-                  <div className="mt-auto text-center text-sm text-muted-foreground">
-                    This is a simulated PDF viewer. In a real application, the actual PDF would be displayed here.
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+          <div className="mx-auto max-w-3xl">
+            <PDFViewer
+              url={`/api/documents/${document.id}`}
+              scale={zoom}
+              pageNumber={currentPage}
+              onLoadSuccess={setTotalPages}
+              className="rounded-lg shadow-lg"
+            />
+          </div>
         </div>
         
         {/* Document Info Sidebar */}
@@ -203,10 +201,10 @@ const ViewPDF = () => {
               </div>
               <div>
                 <h4 className="text-sm font-medium text-muted-foreground">Pages</h4>
-                <p>{loading ? "Loading..." : totalPages}</p>
+                <p>{totalPages}</p>
               </div>
               <div>
-                <h4 className="text-sm font-medium text-muted-foreground">File Location</h4>
+                <h4 className="text-sm font-medium text-muted-foreground">Storage Location</h4>
                 <p className="break-all text-sm">{document.s3_key}</p>
               </div>
             </div>
@@ -221,19 +219,19 @@ const ViewPDF = () => {
             variant="outline" 
             size="icon" 
             onClick={handlePreviousPage}
-            disabled={loading || currentPage <= 1}
+            disabled={currentPage <= 1}
           >
             <ChevronLeft className="h-4 w-4" />
             <span className="sr-only">Previous page</span>
           </Button>
           <span className="min-w-[60px] text-center text-sm">
-            {loading ? "-" : `${currentPage} / ${totalPages}`}
+            {`${currentPage} / ${totalPages}`}
           </span>
           <Button 
             variant="outline" 
             size="icon" 
             onClick={handleNextPage}
-            disabled={loading || currentPage >= totalPages}
+            disabled={currentPage >= totalPages}
           >
             <ChevronRight className="h-4 w-4" />
             <span className="sr-only">Next page</span>

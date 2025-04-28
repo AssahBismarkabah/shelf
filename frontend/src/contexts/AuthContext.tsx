@@ -33,9 +33,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsLoading(true);
         setError(null);
         
-        const storedToken = localStorage.getItem('token');
+    const storedToken = localStorage.getItem('token');
         const storedUserStr = localStorage.getItem('user');
-        
+    
         if (!storedToken || !storedUserStr) {
           return;
         }
@@ -60,7 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             throw new Error('Invalid user data structure');
           }
 
-          setToken(storedToken);
+      setToken(storedToken);
           setUser(parsedUser);
         } catch (parseError) {
           console.error('Failed to parse stored user data:', parseError);
@@ -77,7 +77,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(null);
       } finally {
         setIsLoading(false);
-      }
+    }
     };
 
     initializeAuth();
@@ -101,8 +101,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string) => {
     try {
-      setIsLoading(true);
-      setError(null);
+    setIsLoading(true);
+    setError(null);
       const response = await authApi.login(email, password);
       setToken(response.token);
       setUser(response.user);
@@ -119,8 +119,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const register = async (name: string, email: string, password: string) => {
     try {
-      setIsLoading(true);
-      setError(null);
+    setIsLoading(true);
+    setError(null);
       const response = await authApi.register(name, email, password);
       setToken(response.token);
       setUser(response.user);
@@ -144,15 +144,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        token,
-        login,
-        register,
-        logout,
+    <AuthContext.Provider 
+      value={{ 
+        user, 
+        token, 
+        login, 
+        register, 
+        logout, 
         isAuthenticated: !!token,
-        isLoading,
+        isLoading, 
         error,
       }}
     >

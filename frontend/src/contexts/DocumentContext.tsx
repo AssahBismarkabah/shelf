@@ -44,14 +44,14 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       await documentApi.upload(formData);
       await getDocuments();
-    } catch (err) {
+      } catch (err) {
       setError('Failed to upload document');
       console.error(err);
     } finally {
       setIsLoading(false);
-    }
-  };
-
+      }
+    };
+    
   const getDocuments = async () => {
     setIsLoading(true);
     setError(null);
@@ -100,14 +100,14 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   return (
     <DocumentContext.Provider
       value={{
-        documents,
+      documents, 
         currentDocument,
         isLoading,
         error,
-        uploadDocument,
+      uploadDocument, 
         getDocuments,
         getDocument,
-        deleteDocument,
+      deleteDocument, 
       }}
     >
       {children}

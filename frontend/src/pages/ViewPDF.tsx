@@ -167,7 +167,7 @@ const ViewPDF = () => {
       <div className="flex flex-1 overflow-hidden">
         {/* PDF Viewer */}
         <div className="flex-1 overflow-auto bg-muted/30 p-4">
-          <div className="mx-auto max-w-3xl">
+            <div className="mx-auto max-w-3xl">
             <PDFViewer
               url={`/api/documents/${document.id}`}
               scale={zoom}
@@ -175,7 +175,7 @@ const ViewPDF = () => {
               onLoadSuccess={setTotalPages}
               className="rounded-lg shadow-lg"
             />
-          </div>
+            </div>
         </div>
         
         {/* Document Info Sidebar */}

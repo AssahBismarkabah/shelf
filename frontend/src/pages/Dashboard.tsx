@@ -45,7 +45,7 @@ const Dashboard = () => {
       stopLoading();
     }
   }, [isLoading, startLoading, stopLoading]);
-
+  
   const filteredDocuments = documents.filter(doc => 
     doc.filename.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -220,7 +220,7 @@ const Dashboard = () => {
                       className="border-b transition-colors hover:bg-muted/20"
                     >
                       <td className="px-4 py-3 w-[58px]">
-                        <PDFThumbnail url={document.s3_key} className="h-14 w-10 object-contain shadow rounded" />
+                        <PDFThumbnail url={document.s3_key} isList={true} className="h-14 w-10 object-contain shadow rounded" />
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">

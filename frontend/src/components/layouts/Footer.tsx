@@ -1,6 +1,6 @@
-
 import { BookOpen, Github, FileText, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
+import { ThemeToggle } from "../theme/ThemeToggle";
 
 export default function Footer() {
   return (
@@ -17,7 +17,6 @@ export default function Footer() {
               Organize, preview, and discover your documents with ease. The modern solution for your document management needs.
             </p>
           </div>
-          
           {/* Quick links */}
           <div>
             <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
@@ -28,23 +27,27 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                  Features
-                </a>
+                <Link to="/privacy" className="text-muted-foreground hover:text-primary transition-colors">
+                  Privacy Policy
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                  Pricing
-                </a>
+                <Link to="/terms" className="text-muted-foreground hover:text-primary transition-colors">
+                  Terms of Service
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                  FAQ
-                </a>
+                <Link to="/about" className="text-muted-foreground hover:text-primary transition-colors">
+                  About
+                </Link>
+              </li>
+              <li>
+                <Link to="/contact" className="text-muted-foreground hover:text-primary transition-colors">
+                  Contact Us
+                </Link>
               </li>
             </ul>
           </div>
-          
           {/* Connect */}
           <div>
             <h3 className="text-lg font-semibold mb-4">Connect With Us</h3>
@@ -75,7 +78,10 @@ export default function Footer() {
                 <span className="sr-only">Email</span>
               </a>
             </div>
-            <p className="text-sm text-muted-foreground">
+            <div className="flex items-center space-x-2 mt-4">
+              <ThemeToggle />
+            </div>
+            <p className="text-sm text-muted-foreground mt-4">
               &copy; {new Date().getFullYear()} Shelf. All rights reserved.
             </p>
           </div>

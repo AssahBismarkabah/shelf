@@ -12,12 +12,12 @@ function App() {
         <LoadingProvider>
           <InitialLoader>
             <AppRoutes />
-            <Toaster />
+        <Toaster />
           </InitialLoader>
         </LoadingProvider>
       </AuthProvider>
-    </BrowserRouter>
-  );
+        </BrowserRouter>
+);
 }
 
 export default App;

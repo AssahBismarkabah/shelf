@@ -1,3 +1,4 @@
+
 import { useState, useRef } from 'react';
 import { X, Upload, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -114,8 +115,8 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 fade-in">
-      <div className="w-full max-w-md rounded-lg bg-background p-6 shadow-lg slide-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-md rounded-lg bg-background p-6 shadow-lg">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-bold">Upload Document</h2>
           <Button variant="ghost" size="icon" onClick={onClose}>

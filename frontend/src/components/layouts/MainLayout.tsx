@@ -305,7 +305,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       )}
 
       {/* Main content */}
-      <main className={`flex-1 ${isAuthenticated ? "md:pl-56" : ""} transition-all duration-300`}>
+      <main className={`flex-1 ${isAuthenticated ? "md:pl-56" : ""}`}>
         {children}
       </main>
 

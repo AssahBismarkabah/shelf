@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from "react";
 import { FileText } from "lucide-react";
 import * as pdfjsLib from "pdfjs-dist";
@@ -13,12 +14,10 @@ interface PDFThumbnailProps {
 export default function PDFThumbnail({ url, className }: PDFThumbnailProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [error, setError] = useState(false);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
     setError(false);
-    setLoading(true);
     if (!url) return setError(true);
 
     // Load and render the first page of the PDF
@@ -32,9 +31,7 @@ export default function PDFThumbnail({ url, className }: PDFThumbnailProps) {
           canvas.width = viewport.width;
           canvas.height = viewport.height;
           ctx.clearRect(0, 0, canvas.width, canvas.height);
-          page.render({ canvasContext: ctx, viewport }).promise.then(() => {
-            if (isMounted) setLoading(false);
-          });
+          page.render({ canvasContext: ctx, viewport });
         }
       })
       .catch(() => setError(true));
@@ -48,15 +45,7 @@ export default function PDFThumbnail({ url, className }: PDFThumbnailProps) {
       </div>
     );
   }
-
   return (
-    <div className={`relative ${className ? className : ""}`}>
-      {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-white/70">
-          <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-b-2 border-shelf-400"></div>
-        </div>
-      )}
-      <canvas ref={canvasRef} className="rounded bg-white" />
-    </div>
+    <canvas ref={canvasRef} className={`rounded bg-white ${className ? className : ""}`} />
   );
 }

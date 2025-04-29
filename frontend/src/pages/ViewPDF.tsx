@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { 
@@ -71,9 +72,9 @@ const ViewPDF = () => {
   }
 
   return (
-    <div className="flex h-[calc(100vh-9rem)] flex-col fade-in">
+    <div className="flex h-[calc(100vh-9rem)] flex-col">
       {/* Toolbar */}
-      <div className="flex items-center justify-between border-b px-4 py-2 slide-in">
+      <div className="flex items-center justify-between border-b px-4 py-2">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" asChild>
             <Link to="/dashboard">
@@ -150,7 +151,7 @@ const ViewPDF = () => {
       
       <div className="flex flex-1 overflow-hidden">
         {/* PDF Viewer */}
-        <div className="flex-1 overflow-auto bg-muted/30 p-4 slide-in">
+        <div className="flex-1 overflow-auto bg-muted/30 p-4">
           {loading ? (
             <div className="mx-auto max-w-3xl">
               <Skeleton className="aspect-[3/4] w-full rounded-lg" />
@@ -182,7 +183,7 @@ const ViewPDF = () => {
         
         {/* Document Info Sidebar */}
         {infoOpen && (
-          <div className="w-72 overflow-y-auto border-l bg-card p-4 slide-in">
+          <div className="w-72 overflow-y-auto border-l bg-card p-4">
             <h3 className="mb-4 font-medium">Document Information</h3>
             <div className="space-y-4">
               <div>
@@ -215,7 +216,7 @@ const ViewPDF = () => {
       </div>
       
       {/* Mobile Controls */}
-      <div className="flex items-center justify-between border-t px-4 py-2 md:hidden slide-in">
+      <div className="flex items-center justify-between border-t px-4 py-2 md:hidden">
         <div className="flex items-center gap-2">
           <Button 
             variant="outline" 

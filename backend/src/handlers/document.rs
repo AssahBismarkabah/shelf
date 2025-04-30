@@ -1,6 +1,6 @@
 use crate::{
     middleware::auth::AuthenticatedUser,
-    models::document::{self, Entity as Document},
+    models::{document, subscription},
     services::storage::StorageService,
 };
 use actix_multipart::Multipart;
@@ -47,9 +47,34 @@ pub async fn upload_document(
             buffer.extend_from_slice(&chunk);
         }
 
+        // Fetch user's subscription to get storage limit
+        let subscription = subscription::Entity::find()
+            .filter(subscription::Column::UserId.eq(user.id))
+            .one(db.get_ref())
+            .await
+            .map_err(|e| actix_web::error::ErrorInternalServerError(e))?;
+
+        let user_storage_limit = subscription.map(|s| s.storage_limit_bytes).unwrap_or(0);
+        // Calculate current storage usage by summing file sizes of user's documents
+        let current_storage_usage_result = document::Entity::find()
+            .filter(document::Column::UserId.eq(user.id))
+            .all(db.get_ref())
+            .await;
+
+        let current_storage_usage = match current_storage_usage_result {
+            Ok(documents) => documents.iter().map(|doc| doc.file_size).sum(),
+            Err(_) => 0, // Default to 0 if there's an error fetching documents
+        };
+
         // Upload to S3
         storage
-            .upload_file(&s3_key, &content_type, std::io::Cursor::new(buffer.clone()))
+            .upload_file(
+                &s3_key,
+                &content_type,
+                std::io::Cursor::new(buffer.clone()),
+                user_storage_limit,
+                current_storage_usage,
+            )
             .await
             .map_err(|e| actix_web::error::ErrorInternalServerError(e))?;
 
@@ -63,12 +88,12 @@ pub async fn upload_document(
             ..Default::default()
         };
 
-        let result = Document::insert(document)
+        let result = document::Entity::insert(document)
             .exec(db.get_ref())
             .await
             .map_err(|e| actix_web::error::ErrorInternalServerError(e))?;
 
-        let document = Document::find_by_id(result.last_insert_id)
+        let document = document::Entity::find_by_id(result.last_insert_id)
             .one(db.get_ref())
             .await
             .map_err(|e| actix_web::error::ErrorInternalServerError(e))?
@@ -92,7 +117,7 @@ pub async fn download_document(
 ) -> Result<HttpResponse, Error> {
     let document_id = path.into_inner();
 
-    let document = Document::find_by_id(document_id)
+    let document = document::Entity::find_by_id(document_id)
         .filter(document::Column::UserId.eq(user.id))
         .one(db.get_ref())
         .await
@@ -118,7 +143,7 @@ pub async fn list_documents(
     db: web::Data<DatabaseConnection>,
     user: AuthenticatedUser,
 ) -> Result<HttpResponse, Error> {
-    let documents = Document::find()
+    let documents = document::Entity::find()
         .filter(document::Column::UserId.eq(user.id))
         .all(db.get_ref())
         .await
@@ -135,7 +160,7 @@ pub async fn delete_document(
 ) -> Result<HttpResponse, Error> {
     let document_id = path.into_inner();
 
-    let document = Document::find_by_id(document_id)
+    let document = document::Entity::find_by_id(document_id)
         .filter(document::Column::UserId.eq(user.id))
         .one(db.get_ref())
         .await
@@ -149,7 +174,7 @@ pub async fn delete_document(
         .map_err(|e| actix_web::error::ErrorInternalServerError(e))?;
 
     // Delete from database
-    Document::delete_by_id(document_id)
+    document::Entity::delete_by_id(document_id)
         .exec(db.get_ref())
         .await
         .map_err(|e| actix_web::error::ErrorInternalServerError(e))?;

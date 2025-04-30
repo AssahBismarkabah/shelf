@@ -10,6 +10,8 @@ pub struct Model {
     pub stripe_customer_id: String,
     pub stripe_subscription_id: String,
     pub status: String,
+    pub plan: String,             // e.g., 'basic', 'premium', 'enterprise'
+    pub storage_limit_bytes: i64, // Storage limit in bytes based on plan
     pub current_period_end: DateTimeWithTimeZone,
     #[sea_orm(column_type = "TimestampWithTimeZone")]
     pub created_at: DateTimeWithTimeZone,

@@ -1,7 +1,11 @@
 use crate::{
-    error::AppError, middleware::auth::AuthenticatedUser, services::payment::PaymentService,
+    error::AppError,
+    middleware::auth::AuthenticatedUser,
+    models::subscription::{self, Entity as Subscription},
+    services::payment::PaymentService,
 };
 use actix_web::{web, HttpResponse};
+use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize)]
@@ -41,15 +45,56 @@ pub async fn request_payment(
 
 pub async fn check_payment_status(
     payment_service: web::Data<PaymentService>,
-    _user: AuthenticatedUser,
-    reference_id: web::Path<String>,
+    user: AuthenticatedUser,
+    path: web::Path<String>,
+    db: web::Data<DatabaseConnection>,
 ) -> Result<HttpResponse, AppError> {
+    let reference_id = path.into_inner();
     let payment = payment_service
-        .check_payment_status(reference_id.into_inner())
+        .check_payment_status(reference_id.clone())
         .await?;
+
+    // If payment is successful, update subscription
+    // Assuming payment.status is an enum, adjust comparison accordingly
+    if format!("{:?}", payment.status) == "SUCCESSFUL" {
+        // Determine plan based on payment amount
+        let amount: i64 = payment.amount.to_string().parse().unwrap_or(0); // Convert Decimal to string then parse to i64, default to 0 if conversion fails
+        let plan = if amount >= 10000 {
+            "enterprise"
+        } else if amount >= 5000 {
+            "premium"
+        } else {
+            "basic"
+        };
+        let update_result = Subscription::update_many()
+            .col_expr(subscription::Column::Plan, plan.into())
+            .col_expr(
+                subscription::Column::StorageLimitBytes,
+                get_storage_limit_for_plan(plan).into(),
+            )
+            .filter(subscription::Column::UserId.eq(user.id))
+            .exec(db.get_ref())
+            .await;
+
+        if let Err(e) = update_result {
+            return Err(AppError::InternalServerError(format!(
+                "Failed to update subscription: {}",
+                e
+            )));
+        }
+    }
 
     Ok(HttpResponse::Ok().json(PaymentResponse {
         reference_id: payment.reference_id,
         status: format!("{:?}", payment.status),
     }))
+}
+
+fn get_storage_limit_for_plan(plan: &str) -> i64 {
+    match plan {
+        "basic" => 1_073_741_824,       // 1 GB
+        "premium" => 5_368_709_120,     // 5 GB
+        "enterprise" => 10_737_418_240, // 10 GB
+        _ => 0,                         // Default to 0 if plan is invalid
+    }
 }

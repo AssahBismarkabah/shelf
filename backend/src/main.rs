@@ -3,6 +3,7 @@ use actix_cors::Cors;
 use actix_web::{web, App, HttpServer};
 use actix_web_httpauth::middleware::HttpAuthentication;
 use handlers::payment::{check_payment_status, request_payment};
+use handlers::subscription::update_subscription;
 use services::payment::PaymentService;
 use std::env;
 
@@ -88,6 +89,10 @@ async fn main() -> std::io::Result<()> {
                                         web::resource("/status/{reference_id}")
                                             .route(web::get().to(check_payment_status)),
                                     ),
+                            )
+                            .service(
+                                web::resource("/subscription/update")
+                                    .route(web::post().to(update_subscription)),
                             ),
                     ),
             )

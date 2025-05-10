@@ -14,28 +14,23 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onClose }) => {
   const [file, setFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [subscription, setSubscription] = useState<{ plan: string; storageLimitBytes: number; storageUsageBytes: number } | null>(null);
   const [checkingSubscription, setCheckingSubscription] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { uploadDocument, getDocuments } = useDocuments();
   const { toast } = useToast();
   const navigate = useNavigate();
-  // Use mock mode for testing subscription status - set to false to attempt real API call
-  const isMockMode = false; // Set to false to use real backend API
   
   useEffect(() => {
     const checkSubscription = async () => {
       try {
         setCheckingSubscription(true);
-        if (isMockMode) {
-          // Simulate a subscribed user in mock mode
-          setIsSubscribed(true);
-          return;
-        }
-        // Corrected subscription endpoint path - assuming backend expects /subscription
         const response = await api.get('/subscription');
-        // Check if user has an active subscription (not null or 'none')
-        setIsSubscribed(response.data.plan && response.data.plan !== 'none');
+        setSubscription({
+          plan: response.data.plan,
+          storageLimitBytes: response.data.storage_limit_bytes,
+          storageUsageBytes: response.data.storage_usage_bytes || 0
+        });
       } catch (error) {
         toast({
           title: "Subscription Check Failed",
@@ -48,7 +43,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onClose }) => {
       }
     };
     checkSubscription();
-  }, [toast, isMockMode]);
+  }, [toast]);
   
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -66,7 +61,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onClose }) => {
     e.stopPropagation();
     setDragActive(false);
     
-    if (!isSubscribed) {
+    if (!subscription || subscription.plan === 'none') {
       toast({
         title: "Subscription Required",
         description: "You need an active subscription to upload files. Please subscribe to a plan.",
@@ -79,6 +74,15 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onClose }) => {
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const droppedFile = e.dataTransfer.files[0];
       if (droppedFile.type === 'application/pdf') {
+        // Check if file size exceeds storage limit
+        if (droppedFile.size + subscription.storageUsageBytes > subscription.storageLimitBytes) {
+          toast({
+            title: "Storage Limit Exceeded",
+            description: "This file would exceed your storage limit. Please upgrade your plan or delete some files.",
+            variant: "destructive"
+          });
+          return;
+        }
         setFile(droppedFile);
       } else {
         toast({
@@ -91,7 +95,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onClose }) => {
   };
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!isSubscribed) {
+    if (!subscription || subscription.plan === 'none') {
       toast({
         title: "Subscription Required",
         description: "You need an active subscription to upload files. Please subscribe to a plan.",
@@ -104,6 +108,15 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onClose }) => {
     if (e.target.files && e.target.files.length > 0) {
       const selectedFile = e.target.files[0];
       if (selectedFile.type === 'application/pdf') {
+        // Check if file size exceeds storage limit
+        if (selectedFile.size + subscription.storageUsageBytes > subscription.storageLimitBytes) {
+          toast({
+            title: "Storage Limit Exceeded",
+            description: "This file would exceed your storage limit. Please upgrade your plan or delete some files.",
+            variant: "destructive"
+          });
+          return;
+        }
         setFile(selectedFile);
       } else {
         toast({
@@ -118,7 +131,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onClose }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!isSubscribed) {
+    if (!subscription || subscription.plan === 'none') {
       toast({
         title: "Subscription Required",
         description: "You need an active subscription to upload files. Please subscribe to a plan.",

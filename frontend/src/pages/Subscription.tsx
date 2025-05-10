@@ -47,8 +47,15 @@ const Subscription = () => {
 
   const plans: SubscriptionPlan[] = [
     {
+      name: 'Free',
+      price: '0 XAF/month',
+      storage: '100 MB',
+      features: ['Basic PDF storage', 'Limited features', 'Community support'],
+      planId: 'none'
+    },
+    {
       name: 'Basic',
-      price: 'Free',
+      price: '100 XAF/month',
       storage: '1 GB',
       features: ['Basic PDF storage', 'Limited sharing', 'Basic support'],
       planId: 'basic'
@@ -80,14 +87,13 @@ const Subscription = () => {
 
     try {
       startLoading("Initiating payment...");
-      // This would be replaced with actual payment API call to MTN MoMo
-      // await paymentApi.initiatePayment(planId);
-      toast({
-        title: "Payment Initiated",
-        description: `Payment process started for ${planId} plan. You will be redirected to MTN MoMo.`
+      // Navigate to payment page with plan details
+      navigate('/payment', { 
+        state: { 
+          planId,
+          amount: planId === 'basic' ? '100' : planId === 'premium' ? '500' : '1000'
+        } 
       });
-      // Navigate to a payment processing page or modal in the future
-      navigate('/payment', { state: { planId } });
     } catch (error) {
       toast({
         title: "Error",

@@ -38,6 +38,8 @@ CREATE TABLE IF NOT EXISTS subscriptions (
     stripe_customer_id VARCHAR(255) NOT NULL,
     stripe_subscription_id VARCHAR(255) NOT NULL,
     status VARCHAR(50) NOT NULL,
+    plan VARCHAR(50) NOT NULL DEFAULT 'none',
+    storage_limit_bytes BIGINT NOT NULL DEFAULT 0, -- No storage by default
     current_period_end TIMESTAMPTZ NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP

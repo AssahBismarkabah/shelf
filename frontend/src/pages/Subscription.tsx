@@ -23,25 +23,25 @@ const Subscription = () => {
   const navigate = useNavigate();
   const { startLoading, stopLoading } = useLoading();
 
-  useEffect(() => {
-    const fetchSubscription = async () => {
-      try {
-        startLoading();
-        const response = await api.get('/subscription');
-        setCurrentPlan(response.data.plan);
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to load subscription information. Please try again later.",
-          variant: "destructive"
-        });
-        console.error(error);
-      } finally {
-        stopLoading();
-        setIsLoadingPlan(false);
-      }
-    };
+  const fetchSubscription = async () => {
+    try {
+      startLoading();
+      const response = await api.get('/subscription');
+      setCurrentPlan(response.data.plan);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load subscription information. Please try again later.",
+        variant: "destructive"
+      });
+      console.error(error);
+    } finally {
+      stopLoading();
+      setIsLoadingPlan(false);
+    }
+  };
 
+  useEffect(() => {
     fetchSubscription();
   }, [toast, startLoading, stopLoading]);
 
@@ -95,6 +95,7 @@ const Subscription = () => {
         } 
       });
     } catch (error) {
+      console.error('Navigation error:', error);
       toast({
         title: "Error",
         description: "Failed to initiate payment process.",

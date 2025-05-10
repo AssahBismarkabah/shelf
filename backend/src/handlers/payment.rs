@@ -54,11 +54,14 @@ pub async fn check_payment_status(
         .check_payment_status(reference_id.clone())
         .await?;
 
+    println!("Payment status: {:?}", payment.status);
+    println!("Payment amount: {}", payment.amount);
+
     // If payment is successful, update subscription
-    // Assuming payment.status is an enum, adjust comparison accordingly
-    if format!("{:?}", payment.status) == "SUCCESSFUL" {
+    if format!("{:?}", payment.status) == "Successful" {
+        println!("Payment successful, updating subscription");
         // Determine plan based on payment amount
-        let amount: i64 = payment.amount.to_string().parse().unwrap_or(0); // Convert Decimal to string then parse to i64, default to 0 if conversion fails
+        let amount: i64 = payment.amount.to_string().parse().unwrap_or(0);
         let plan = if amount >= 10000 {
             "enterprise"
         } else if amount >= 5000 {
@@ -66,22 +69,30 @@ pub async fn check_payment_status(
         } else {
             "basic"
         };
+        println!("Updating to plan: {}", plan);
         let update_result = Subscription::update_many()
             .col_expr(subscription::Column::Plan, plan.into())
             .col_expr(
                 subscription::Column::StorageLimitBytes,
                 get_storage_limit_for_plan(plan).into(),
             )
+            .col_expr(subscription::Column::Status, "active".into())
             .filter(subscription::Column::UserId.eq(user.id))
             .exec(db.get_ref())
             .await;
 
-        if let Err(e) = update_result {
-            return Err(AppError::InternalServerError(format!(
-                "Failed to update subscription: {}",
-                e
-            )));
+        match update_result {
+            Ok(_) => println!("Subscription updated successfully"),
+            Err(e) => {
+                println!("Failed to update subscription: {}", e);
+                return Err(AppError::InternalServerError(format!(
+                    "Failed to update subscription: {}",
+                    e
+                )));
+            }
         }
+    } else {
+        println!("Payment not successful, status: {:?}", payment.status);
     }
 
     Ok(HttpResponse::Ok().json(PaymentResponse {

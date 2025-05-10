@@ -113,39 +113,30 @@ const Payment = () => {
     setIsProcessing(true);
     startLoading("Processing payment...");
     try {
-      if (isMockMode) {
-        // In mock mode, don't call the actual API, just simulate initiation
-        const newReferenceId = `${Date.now()}_${Math.floor(Math.random() * 1000000)}`;
-        toast({
-          title: "Payment Initiated (Mock)",
-          description: `Your payment for the ${planId} plan has been initiated. (This is a mock response for testing.)`
-        });
-        setReferenceId(newReferenceId);
-      } else {
-        // Initiate payment request to MTN MoMo via backend
-        const response = await api.post('/payments/request', {
-          amount: amount,
-          phone_number: phoneNumber,
-          payer_message: `Payment for ${planId} plan`,
-          payee_note: `Subscription payment for ${planId}`
-        });
-        
-        toast({
-          title: "Payment Initiated",
-          description: `Your payment for the ${planId} plan has been initiated. Please complete the payment on your phone.`
-        });
-        
-        // Store the reference_id from the backend response for status checking
-        setReferenceId(response.data.reference_id);
-      }
-      // The status checking will be triggered by the useEffect
+      // Initiate payment request to MTN MoMo via backend
+      const response = await api.post('/payments/request', {
+        amount: amount,
+        phone_number: phoneNumber,
+        payer_message: `Payment for ${planId} plan`,
+        payee_note: `Subscription payment for ${planId}`
+      });
+      
+      console.log('Payment response:', response.data);
+      
+      toast({
+        title: "Payment Initiated",
+        description: `Your payment for the ${planId} plan has been initiated. Please complete the payment on your phone.`
+      });
+      
+      // Store the reference_id from the backend response for status checking
+      setReferenceId(response.data.reference_id);
     } catch (error) {
+      console.error('Payment error:', error);
       toast({
         title: "Payment Failed",
         description: "There was an error initiating your payment. Please try again.",
         variant: "destructive"
       });
-      console.error(error);
       stopLoading();
       setIsProcessing(false);
     }

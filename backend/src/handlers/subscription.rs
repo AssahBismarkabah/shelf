@@ -33,27 +33,69 @@ pub async fn update_subscription(
         }
     };
 
-    // Update subscription in database
-    match Subscription::update_many()
-        .col_expr(subscription::Column::Plan, plan.into())
-        .col_expr(
-            subscription::Column::StorageLimitBytes,
-            storage_limit_bytes.into(),
-        )
+    // First check if subscription exists
+    match Subscription::find()
         .filter(subscription::Column::UserId.eq(user_id))
-        .exec(db.get_ref())
+        .one(db.get_ref())
         .await
     {
-        Ok(_) => HttpResponse::Ok().json(serde_json::json!({
-            "message": format!("Subscription updated to {} with storage limit {} bytes", plan, storage_limit_bytes),
-            "plan": plan,
-            "storage_limit_bytes": storage_limit_bytes
-        })),
-        Err(e) => {
-            HttpResponse::InternalServerError().json(serde_json::json!({
-                "error": format!("Error updating subscription: {}", e)
-            }))
+        Ok(Some(_)) => {
+            // Update existing subscription
+            match Subscription::update_many()
+                .col_expr(subscription::Column::Plan, plan.into())
+                .col_expr(
+                    subscription::Column::StorageLimitBytes,
+                    storage_limit_bytes.into(),
+                )
+                .col_expr(
+                    subscription::Column::Status,
+                    "active".into(),
+                )
+                .filter(subscription::Column::UserId.eq(user_id))
+                .exec(db.get_ref())
+                .await
+            {
+                Ok(_) => HttpResponse::Ok().json(serde_json::json!({
+                    "message": format!("Subscription updated to {} with storage limit {} bytes", plan, storage_limit_bytes),
+                    "plan": plan,
+                    "storage_limit_bytes": storage_limit_bytes,
+                    "status": "active"
+                })),
+                Err(e) => {
+                    HttpResponse::InternalServerError().json(serde_json::json!({
+                        "error": format!("Error updating subscription: {}", e)
+                    }))
+                }
+            }
         }
+        Ok(None) => {
+            // Create new subscription
+            let new_subscription = subscription::ActiveModel {
+                user_id: Set(user_id),
+                stripe_customer_id: Set("none".to_string()),
+                stripe_subscription_id: Set("none".to_string()),
+                status: Set("active".to_string()),
+                plan: Set(plan.clone()),
+                storage_limit_bytes: Set(storage_limit_bytes),
+                current_period_end: Set(Utc::now().into()),
+                ..Default::default()
+            };
+
+            match new_subscription.insert(db.get_ref()).await {
+                Ok(subscription) => HttpResponse::Ok().json(serde_json::json!({
+                    "message": "Subscription created successfully",
+                    "plan": subscription.plan,
+                    "storage_limit_bytes": subscription.storage_limit_bytes,
+                    "status": subscription.status
+                })),
+                Err(e) => HttpResponse::InternalServerError().json(serde_json::json!({
+                    "error": format!("Error creating subscription: {}", e)
+                })),
+            }
+        }
+        Err(e) => HttpResponse::InternalServerError().json(serde_json::json!({
+            "error": format!("Error checking subscription: {}", e)
+        })),
     }
 }
 

@@ -35,49 +35,8 @@
 
 .card {
   padding: 2em;
-  background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
-  border-radius: 1em;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-.card:hover {
-  transform: translateY(-0.5em);
-  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
 }
 
 .read-the-docs {
   color: #888;
-  font-style: italic;
-  transition: color 0.3s ease;
-}
-.read-the-docs:hover {
-  color: #333;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes slideIn {
-  from {
-    transform: translateY(20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-.fade-in {
-  animation: fadeIn 1s ease-in-out;
-}
-
-.slide-in {
-  animation: slideIn 0.5s ease-in-out;
 }

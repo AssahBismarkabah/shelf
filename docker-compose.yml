@@ -1,5 +1,45 @@
 services:
-  postgres:
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+    networks:
+      - shelf-network
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: pdf_shelf_api
+    environment:
+      DATABASE_URL: postgres://pdfshelf:pdfshelf123@db:5432/pdfshelf
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: pdfshelf
+      MINIO_SECRET_KEY: pdfshelf123
+      MINIO_BUCKET: pdfshelf
+      AWS_ACCESS_KEY_ID: pdfshelf
+      AWS_SECRET_ACCESS_KEY: pdfshelf123
+      AWS_REGION: us-east-1
+      AWS_ENDPOINT_URL: http://minio:9000
+      JWT_SECRET: shelf_jwt_secret_key_2024_secure_token
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    networks:
+      - shelf-network
+
+  db:
     image: postgres:15-alpine
     container_name: pdf_shelf_postgres
     environment:
@@ -18,7 +58,7 @@ services:
       retries: 5
     command: postgres -c 'max_connections=1000'
     networks:
-      - pdfshelf
+      - shelf-network
 
   minio:
     image: minio/minio
@@ -38,7 +78,7 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - pdfshelf
+      - shelf-network
 
   minio-init:
     image: minio/mc
@@ -56,36 +96,7 @@ services:
       mc policy set public myminio/pdfshelf"
     restart: on-failure
     networks:
-      - pdfshelf
-
-  api:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: pdf_shelf_api
-    environment:
-      DATABASE_URL: postgres://pdfshelf:pdfshelf123@postgres:5432/pdfshelf
-      MINIO_ENDPOINT: http://minio:9000
-      MINIO_ACCESS_KEY: pdfshelf
-      MINIO_SECRET_KEY: pdfshelf123
-      MINIO_BUCKET: pdfshelf
-      AWS_ACCESS_KEY_ID: pdfshelf
-      AWS_SECRET_ACCESS_KEY: pdfshelf123
-      AWS_REGION: us-east-1
-      AWS_ENDPOINT_URL: http://minio:9000
-      JWT_SECRET: shelf_jwt_secret_key_2024_secure_token
-    ports:
-      - "8080:8080"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
-    dns:
-      - 8.8.8.8
-      - 8.8.4.4
-    networks:
-      - pdfshelf
+      - shelf-network
 
   pgadmin:
     image: dpage/pgadmin4
@@ -96,12 +107,12 @@ services:
     ports:
       - "5050:80"
     depends_on:
-      - postgres
+      - db
     networks:
-      - pdfshelf
+      - shelf-network
 
 networks:
-  pdfshelf:
+  shelf-network:
     driver: bridge
 
 volumes:

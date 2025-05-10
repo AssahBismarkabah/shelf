@@ -12,7 +12,8 @@ import {
   Home, 
   LogOut, 
   User,
-  FileText
+  FileText,
+  CreditCard
 } from 'lucide-react';
 import FileUploader from '@/components/documents/FileUploader';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -209,6 +210,20 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                     </a>
                   </li>
                   <li>
+                    <Link
+                      to="/subscription"
+                      className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
+                        location.pathname === "/subscription" 
+                          ? "bg-shelf-100 text-shelf-600" 
+                          : "hover:bg-muted"
+                      }`}
+                      onClick={closeSidebar}
+                    >
+                      <CreditCard className="h-5 w-5" />
+                      Subscription
+                    </Link>
+                  </li>
+                  <li>
                     <a
                       href="#"
                       className="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-muted"
@@ -266,6 +281,17 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                   <Book className="h-5 w-5" />
                   My Documents
                 </Link>
+                <Link
+                  to="/subscription"
+                  className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
+                    location.pathname === "/subscription" 
+                      ? "bg-shelf-100 text-shelf-600" 
+                      : "hover:bg-muted"
+                  }`}
+                >
+                  <CreditCard className="h-5 w-5" />
+                  Subscription
+                </Link>
                 <a
                   href="#"
                   className="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-muted"
@@ -305,40 +331,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       )}
 
       {/* Main content */}
-      <main className={`flex-1 ${isAuthenticated ? "md:pl-56" : ""} transition-all duration-300`}>
+      <main className={`flex-1 ${isAuthenticated ? "md:pl-56" : ""}`}>
         {children}
       </main>
-
-      {/* Footer */}
-      <footer className={`border-t bg-background ${isAuthenticated ? "md:pl-56" : ""}`}>
-        <div className="container flex flex-col md:flex-row h-auto md:h-16 items-center justify-between px-4 sm:px-6 py-6 md:py-2">
-          <div className="flex items-center mb-4 md:mb-0">
-            <Book className="h-5 w-5 text-shelf-400 mr-2" />
-            <p className="text-sm font-medium">
-              &copy; {new Date().getFullYear()} Shelf. All rights reserved.
-            </p>
-          </div>
-          <div className="flex flex-col md:flex-row items-center gap-4">
-            <div className="grid grid-cols-2 gap-2 mb-4 md:mb-0 md:mr-6">
-              <a href="#" className="text-sm text-muted-foreground hover:text-shelf-400 transition-colors duration-200 hover:underline">
-                Privacy Policy
-              </a>
-              <a href="#" className="text-sm text-muted-foreground hover:text-shelf-400 transition-colors duration-200 hover:underline">
-                Terms of Service
-              </a>
-              <a href="#" className="text-sm text-muted-foreground hover:text-shelf-400 transition-colors duration-200 hover:underline">
-                Contact Us
-              </a>
-              <a href="#" className="text-sm text-muted-foreground hover:text-shelf-400 transition-colors duration-200 hover:underline">
-                About
-              </a>
-            </div>
-            <div className="flex items-center space-x-2">
-              <ThemeToggle />
-            </div>
-          </div>
-        </div>
-      </footer>
 
       {/* File Uploader */}
       {showUploader && (
@@ -360,7 +355,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 }}
               >
                 <FileText className="mr-2 h-4 w-4" />
-                <span>{doc.title}</span>
+                <span>{doc.filename}</span>
               </CommandItem>
             ))}
           </CommandGroup>

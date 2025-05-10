@@ -1,7 +1,9 @@
 use crate::services::storage::StorageService;
+use actix_cors::Cors;
 use actix_web::{web, App, HttpServer};
 use actix_web_httpauth::middleware::HttpAuthentication;
 use handlers::payment::{check_payment_status, request_payment};
+use handlers::subscription::{update_subscription, get_subscription};
 use services::payment::PaymentService;
 use std::env;
 
@@ -43,7 +45,14 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         let auth = HttpAuthentication::bearer(middleware::auth::validator);
 
+        // Configure CORS
+        let cors = Cors::permissive()
+            .allowed_methods(vec!["GET", "POST", "PUT", "DELETE"])
+            .allowed_headers(vec!["Authorization", "Content-Type"])
+            .supports_credentials();
+
         App::new()
+            .wrap(cors)
             .app_data(web::Data::new(pool.clone()))
             .app_data(web::Data::new(storage.clone()))
             .app_data(web::Data::new(payment_service.clone()))
@@ -80,6 +89,14 @@ async fn main() -> std::io::Result<()> {
                                         web::resource("/status/{reference_id}")
                                             .route(web::get().to(check_payment_status)),
                                     ),
+                            )
+                            .service(
+                                web::resource("/subscription/update")
+                                    .route(web::post().to(update_subscription)),
+                            )
+                            .service(
+                                web::resource("/subscription")
+                                    .route(web::get().to(get_subscription)),
                             ),
                     ),
             )

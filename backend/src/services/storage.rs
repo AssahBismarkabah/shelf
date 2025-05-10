@@ -75,6 +75,8 @@ impl StorageService {
         key: &str,
         content_type: &str,
         mut body: R,
+        user_storage_limit: i64,    // User's storage limit in bytes
+        current_storage_usage: i64, // Current storage usage in bytes
     ) -> Result<(), Box<dyn Error>>
     where
         R: AsyncRead + Send + Unpin + 'static,
@@ -86,7 +88,16 @@ impl StorageService {
         let mut buffer = Vec::new();
         tokio::io::copy(&mut body, &mut buffer).await?;
 
-        println!("File size: {} bytes", buffer.len());
+        let file_size = buffer.len() as i64;
+        println!("File size: {} bytes", file_size);
+
+        // Check if upload would exceed storage limit
+        if current_storage_usage + file_size > user_storage_limit {
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Storage limit exceeded",
+            )));
+        }
 
         let body = ByteStream::from(buffer);
 

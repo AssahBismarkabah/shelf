@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { 
@@ -26,18 +26,51 @@ import FileUploader from '@/components/documents/FileUploader';
 import { CommandDialog, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
 import PDFThumbnail from '@/components/documents/PDFThumbnail';
 import Footer from '@/components/layouts/Footer';
+import { useLoading } from '@/contexts/LoadingContext';
+import { CenteredSpinner } from '@/components/ui/loading-overlay';
+import { subscriptionApi } from '@/lib/api';
+import { Progress } from '@/components/ui/progress';
 
 const Dashboard = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [showUploader, setShowUploader] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
-  const { documents, loadingDocuments, deleteDocument } = useDocuments();
+  const [subscription, setSubscription] = useState<{ plan: string; storageLimitBytes: number; storageUsageBytes: number } | null>(null);
+  const { documents, isLoading, deleteDocument } = useDocuments();
   const { toast } = useToast();
+  const { startLoading, stopLoading } = useLoading();
+  
+  useEffect(() => {
+    if (isLoading) {
+      startLoading('Loading your documents...');
+    } else {
+      stopLoading();
+    }
+  }, [isLoading, startLoading, stopLoading]);
+
+  useEffect(() => {
+    const fetchSubscription = async () => {
+      try {
+        const data = await subscriptionApi.get();
+        setSubscription({
+          plan: data.plan,
+          storageLimitBytes: data.storage_limit_bytes,
+          storageUsageBytes: data.storage_usage_bytes || 0,
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch subscription data.",
+          variant: "destructive"
+        });
+      }
+    };
+    fetchSubscription();
+  }, [toast]);
   
   const filteredDocuments = documents.filter(doc => 
-    doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    doc.description.toLowerCase().includes(searchQuery.toLowerCase())
+    doc.filename.toLowerCase().includes(searchQuery.toLowerCase())
   );
   
   const handleDeleteDocument = async (id: number) => {
@@ -62,6 +95,12 @@ const Dashboard = () => {
     const i = Math.floor(Math.log(bytes) / Math.log(1024));
     return Math.round((bytes / Math.pow(1024, i)) * 100) / 100 + ' ' + sizes[i];
   };
+
+  const storagePercentage = subscription ? (subscription.storageUsageBytes / subscription.storageLimitBytes) * 100 : 0;
+
+  if (isLoading) {
+    return <CenteredSpinner />;
+  }
 
   return (
     <div className="container py-8">
@@ -109,16 +148,23 @@ const Dashboard = () => {
             onClick={() => setShowUploader(true)}
           >
             <Upload className="mr-2 h-4 w-4" />
-            Upload
+            Upload Document
           </Button>
         </div>
       </div>
-      
-      {loadingDocuments ? (
-        <div className="flex h-64 w-full items-center justify-center">
-          <div className="h-16 w-16 animate-spin rounded-full border-t-4 border-b-4 border-primary"></div>
+
+      {/* Subscription and Storage Information */}
+      {subscription && (
+        <div className="mb-8 p-4 bg-muted rounded-lg shadow-sm">
+          <h2 className="text-xl font-semibold mb-2">Subscription Plan: {subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1)}</h2>
+          <p className="text-muted-foreground mb-2">Storage Limit: {formatFileSize(subscription.storageLimitBytes)}</p>
+          <p className="text-muted-foreground mb-2">Storage Used: {formatFileSize(subscription.storageUsageBytes)}</p>
+          <Progress value={storagePercentage} className="w-full" />
+          <p className="text-sm text-muted-foreground mt-1">{Math.round(storagePercentage)}% of storage used</p>
         </div>
-      ) : filteredDocuments.length > 0 ? (
+      )}
+
+      {filteredDocuments.length > 0 ? (
         viewMode === 'grid' ? (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filteredDocuments.map((document) => (
@@ -175,12 +221,9 @@ const Dashboard = () => {
                       to={`/view/${document.id}`}
                       className="hover:text-shelf-600 hover:underline"
                     >
-                      {document.title}
+                      {document.filename}
                     </Link>
                   </h3>
-                  <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                    {document.description}
-                  </p>
                   <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
                     <span>{formatFileSize(document.file_size)}</span>
                     <span>{format(new Date(document.created_at), 'MMM d, yyyy')}</span>
@@ -209,7 +252,7 @@ const Dashboard = () => {
                       className="border-b transition-colors hover:bg-muted/20"
                     >
                       <td className="px-4 py-3 w-[58px]">
-                        <PDFThumbnail url={document.file_path} className="h-14 w-10 object-contain shadow rounded" />
+                        <PDFThumbnail url={document.s3_key} isList={true} className="h-14 w-10 object-contain shadow rounded" />
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
@@ -219,11 +262,11 @@ const Dashboard = () => {
                                 to={`/view/${document.id}`}
                                 className="hover:text-shelf-600 hover:underline"
                               >
-                                {document.title}
+                                {document.filename}
                               </Link>
                             </div>
-                            <div className="text-xs text-muted-foreground line-clamp-1">
-                              {document.description}
+                            <div className="text-xs text-muted-foreground">
+                              {formatFileSize(document.file_size)}
                             </div>
                           </div>
                         </div>
@@ -313,7 +356,7 @@ const Dashboard = () => {
                 }}
               >
                 <FileText className="mr-2 h-4 w-4" />
-                <span>{doc.title}</span>
+                <span>{doc.filename}</span>
               </CommandItem>
             ))}
           </CommandGroup>

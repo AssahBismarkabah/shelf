@@ -2,6 +2,7 @@ use crate::models::subscription::{self, Entity as Subscription};
 use actix_web::{web, HttpResponse, Responder};
 use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
 use serde::Deserialize;
+use serde_json;
 
 #[derive(Deserialize)]
 #[allow(dead_code)]
@@ -10,7 +11,6 @@ pub struct SubscriptionUpdate {
     pub plan: String,
 }
 
-#[allow(dead_code)]
 pub async fn update_subscription(
     data: web::Json<SubscriptionUpdate>,
     db: web::Data<DatabaseConnection>,
@@ -44,5 +44,25 @@ pub async fn update_subscription(
         Err(e) => {
             HttpResponse::InternalServerError().body(format!("Error updating subscription: {}", e))
         }
+    }
+}
+
+pub async fn get_subscription(
+    user: crate::middleware::auth::AuthenticatedUser,
+    db: web::Data<DatabaseConnection>,
+) -> impl Responder {
+    let user_id = user.id;
+
+    match Subscription::find()
+        .filter(subscription::Column::UserId.eq(user_id))
+        .one(db.get_ref())
+        .await
+    {
+        Ok(Some(subscription)) => HttpResponse::Ok().json(serde_json::json!({
+            "plan": subscription.plan,
+            "storage_limit_bytes": subscription.storage_limit_bytes
+        })),
+        Ok(None) => HttpResponse::NotFound().body("Subscription not found for user"),
+        Err(e) => HttpResponse::InternalServerError().body(format!("Error fetching subscription: {}", e)),
     }
 }

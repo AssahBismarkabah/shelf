@@ -8,6 +8,8 @@ import Dashboard from "./pages/Dashboard";
 import ViewPDF from "./pages/ViewPDF";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import Subscription from '@/pages/Subscription';
+import Payment from '@/pages/Payment';
 import MainLayout from "./components/layouts/MainLayout";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -37,6 +39,22 @@ export default function AppRoutes() {
               element={
                 <ProtectedRoute>
                   <MainLayout><ViewPDF /></MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/subscription" 
+              element={
+                <ProtectedRoute>
+                  <MainLayout><Subscription /></MainLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/payment" 
+              element={
+                <ProtectedRoute>
+                  <MainLayout><Payment /></MainLayout>
                 </ProtectedRoute>
               } 
             />

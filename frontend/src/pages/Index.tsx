@@ -31,26 +31,13 @@ const Index = () => {
                 Organize, read, and manage your PDFs with ease. Experience document management reimagined.
               </p>
             </div>
-            <div className="flex flex-col sm:flex-row gap-4 mt-8">
-              <Button 
-                asChild 
-                size="lg" 
-                className="bg-shelf-500 hover:bg-shelf-600 text-white px-8 group relative overflow-hidden"
-              >
-                <Link to="/register" className="flex items-center gap-2">
-                  Get Started Free
-                  <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </Link>
-              </Button>
-              <Button 
-                variant="outline" 
-                size="lg"
-                onClick={() => setVideoOpen(true)}
-                className="group"
-              >
-                Watch Demo
-                <span className="ml-2 transition-transform group-hover:translate-x-1">→</span>
-              </Button>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
+              <Link to="/register" className="inline-flex items-center justify-center rounded-md bg-shelf-600 px-6 py-3 text-base font-medium text-white shadow-md transition-colors hover:bg-shelf-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-shelf-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50">
+                Get Started
+              </Link>
+              <Link to="/subscription" className="inline-flex items-center justify-center rounded-md border border-shelf-600 bg-transparent px-6 py-3 text-base font-medium text-shelf-600 shadow-md transition-colors hover:bg-shelf-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-shelf-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 dark:text-white dark:hover:bg-shelf-900">
+                View Plans
+              </Link>
             </div>
             <div className="relative mt-16 w-full max-w-5xl">
               <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent z-10 h-[20%] bottom-0" />
@@ -190,7 +177,7 @@ const Index = () => {
                   <span>Mobile Access</span>
                 </li>
               </ul>
-              <Button asChild variant="outline">
+              <Button asChild>
                 <Link to="/register">Get Started</Link>
               </Button>
             </div>

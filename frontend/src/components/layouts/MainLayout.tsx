@@ -12,7 +12,8 @@ import {
   Home, 
   LogOut, 
   User,
-  FileText
+  FileText,
+  CreditCard
 } from 'lucide-react';
 import FileUploader from '@/components/documents/FileUploader';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -209,6 +210,20 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                     </a>
                   </li>
                   <li>
+                    <Link
+                      to="/subscription"
+                      className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
+                        location.pathname === "/subscription" 
+                          ? "bg-shelf-100 text-shelf-600" 
+                          : "hover:bg-muted"
+                      }`}
+                      onClick={closeSidebar}
+                    >
+                      <CreditCard className="h-5 w-5" />
+                      Subscription
+                    </Link>
+                  </li>
+                  <li>
                     <a
                       href="#"
                       className="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-muted"
@@ -265,6 +280,17 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 >
                   <Book className="h-5 w-5" />
                   My Documents
+                </Link>
+                <Link
+                  to="/subscription"
+                  className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
+                    location.pathname === "/subscription" 
+                      ? "bg-shelf-100 text-shelf-600" 
+                      : "hover:bg-muted"
+                  }`}
+                >
+                  <CreditCard className="h-5 w-5" />
+                  Subscription
                 </Link>
                 <a
                   href="#"

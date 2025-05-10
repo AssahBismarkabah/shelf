@@ -9,7 +9,8 @@ interface AuthResponse {
   };
 }
 
-const API_URL = import.meta.env.VITE_API_URL || '/api';
+// Set API URL with fallback for development
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -132,4 +133,12 @@ export const paymentApi = {
   },
 };
 
-export default api; 
+// Subscription API
+export const subscriptionApi = {
+  get: async () => {
+    const response = await api.get('/subscription');
+    return response.data;
+  },
+};
+
+export default api;

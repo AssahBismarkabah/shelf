@@ -1,11 +1,10 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { X, Upload, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { useDocuments } from '@/contexts/DocumentContext';
 import { useToast } from '@/components/ui/use-toast';
+import api from '@/lib/api';
+import { useNavigate } from 'react-router-dom';
 
 interface FileUploaderProps {
   onClose: () => void;
@@ -15,9 +14,41 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onClose }) => {
   const [file, setFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [checkingSubscription, setCheckingSubscription] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { uploadDocument, getDocuments } = useDocuments();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  // Use mock mode for testing subscription status - set to false to attempt real API call
+  const isMockMode = false; // Set to false to use real backend API
+  
+  useEffect(() => {
+    const checkSubscription = async () => {
+      try {
+        setCheckingSubscription(true);
+        if (isMockMode) {
+          // Simulate a subscribed user in mock mode
+          setIsSubscribed(true);
+          return;
+        }
+        // Corrected subscription endpoint path - assuming backend expects /subscription
+        const response = await api.get('/subscription');
+        // Check if user has an active subscription (not null or 'none')
+        setIsSubscribed(response.data.plan && response.data.plan !== 'none');
+      } catch (error) {
+        toast({
+          title: "Subscription Check Failed",
+          description: "Could not verify your subscription. Please try again.",
+          variant: "destructive"
+        });
+        console.error(error);
+      } finally {
+        setCheckingSubscription(false);
+      }
+    };
+    checkSubscription();
+  }, [toast, isMockMode]);
   
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -35,6 +66,16 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onClose }) => {
     e.stopPropagation();
     setDragActive(false);
     
+    if (!isSubscribed) {
+      toast({
+        title: "Subscription Required",
+        description: "You need an active subscription to upload files. Please subscribe to a plan.",
+        variant: "destructive"
+      });
+      navigate('/subscription');
+      return;
+    }
+    
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const droppedFile = e.dataTransfer.files[0];
       if (droppedFile.type === 'application/pdf') {
@@ -50,6 +91,16 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onClose }) => {
   };
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isSubscribed) {
+      toast({
+        title: "Subscription Required",
+        description: "You need an active subscription to upload files. Please subscribe to a plan.",
+        variant: "destructive"
+      });
+      navigate('/subscription');
+      return;
+    }
+    
     if (e.target.files && e.target.files.length > 0) {
       const selectedFile = e.target.files[0];
       if (selectedFile.type === 'application/pdf') {
@@ -66,6 +117,16 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onClose }) => {
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!isSubscribed) {
+      toast({
+        title: "Subscription Required",
+        description: "You need an active subscription to upload files. Please subscribe to a plan.",
+        variant: "destructive"
+      });
+      navigate('/subscription');
+      return;
+    }
     
     if (!file) {
       toast({
@@ -104,78 +165,85 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onClose }) => {
       <div className="w-full max-w-md rounded-lg bg-background p-6 shadow-lg">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-bold">Upload Document</h2>
-          <Button variant="ghost" size="icon" onClick={onClose}>
+          <Button variant="ghost" size="icon" onClick={onClose} disabled={checkingSubscription || uploading}>
             <X className="h-5 w-5" />
             <span className="sr-only">Close</span>
           </Button>
         </div>
         
-        <form onSubmit={handleSubmit}>
-          <div 
-            className={`mb-4 flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors ${
-              dragActive ? 'border-shelf-400 bg-shelf-50' : 'border-border'
-            }`}
-            onDragEnter={handleDrag}
-            onDragOver={handleDrag}
-            onDragLeave={handleDrag}
-            onDrop={handleDrop}
-          >
-            <input
-              type="file"
-              ref={fileInputRef}
-              accept=".pdf"
-              onChange={handleFileChange}
-              className="hidden"
-            />
-            
-            {file ? (
-              <div className="text-center">
-                <FileText className="mx-auto mb-2 h-12 w-12 text-shelf-400" />
-                <p className="mb-1 break-all font-medium">{file.name}</p>
-                <p className="text-sm text-muted-foreground">
-                  {(file.size / (1024 * 1024)).toFixed(2)} MB
-                </p>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  size="sm" 
-                  className="mt-2"
-                  onClick={() => setFile(null)}
-                >
-                  Change file
-                </Button>
-              </div>
-            ) : (
-              <div className="text-center">
-                <Upload className="mx-auto mb-2 h-12 w-12 text-muted-foreground" />
-                <p className="mb-1 font-medium">Drag and drop your PDF here</p>
-                <p className="mb-4 text-sm text-muted-foreground">
-                  or
-                </p>
-                <Button 
-                  type="button" 
-                  variant="outline"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  Browse files
-                </Button>
-              </div>
-            )}
+        {checkingSubscription ? (
+          <div className="flex justify-center items-center h-40">
+            <div className="animate-spin h-8 w-8 border-4 border-shelf-400 border-t-transparent rounded-full" />
+            <p className="ml-2 text-muted-foreground">Checking subscription...</p>
           </div>
-          
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button 
-              type="submit" 
-              className="bg-shelf-400 hover:bg-shelf-600"
-              disabled={!file || uploading}
+        ) : (
+          <form onSubmit={handleSubmit}>
+            <div 
+              className={`mb-4 flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors ${
+                dragActive ? 'border-shelf-400 bg-shelf-50' : 'border-border'
+              }`}
+              onDragEnter={handleDrag}
+              onDragOver={handleDrag}
+              onDragLeave={handleDrag}
+              onDrop={handleDrop}
             >
-              {uploading ? "Uploading..." : "Upload"}
-            </Button>
-          </div>
-        </form>
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept=".pdf"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+              
+              {file ? (
+                <div className="text-center">
+                  <FileText className="mx-auto mb-2 h-12 w-12 text-shelf-400" />
+                  <p className="mb-1 break-all font-medium">{file.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {(file.size / (1024 * 1024)).toFixed(2)} MB
+                  </p>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm" 
+                    className="mt-2"
+                    onClick={() => setFile(null)}
+                  >
+                    Change file
+                  </Button>
+                </div>
+              ) : (
+                <div className="text-center">
+                  <Upload className="mx-auto mb-2 h-12 w-12 text-muted-foreground" />
+                  <p className="mb-1 font-medium">Drag and drop your PDF here</p>
+                  <p className="mb-4 text-sm text-muted-foreground">
+                    or
+                  </p>
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    Browse files
+                  </Button>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                className="bg-shelf-400 hover:bg-shelf-600"
+                disabled={!file || uploading}
+              >
+                {uploading ? "Uploading..." : "Upload"}
+              </Button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );

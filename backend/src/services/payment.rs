@@ -59,7 +59,7 @@ impl PaymentService {
         }
 
         let currency_code = env::var("MTN_CURRENCY").unwrap_or_else(|_| "EUR".to_string());
-        let currency = match currency_code.as_str() {
+        let currency: mtnmomo::enums::currency::Currency = match currency_code.as_str() {
             "EUR" => Currency::EUR,
             "XAF" => Currency::XAF,
             "XOF" => Currency::XOF,

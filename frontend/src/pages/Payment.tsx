@@ -113,23 +113,23 @@ const Payment = () => {
     setIsProcessing(true);
     startLoading("Processing payment...");
     try {
-      // Initiate payment request to MTN MoMo via backend
-      const response = await api.post('/payments/request', {
-        amount: amount,
-        phone_number: phoneNumber,
-        payer_message: `Payment for ${planId} plan`,
-        payee_note: `Subscription payment for ${planId}`
-      });
+        // Initiate payment request to MTN MoMo via backend
+        const response = await api.post('/payments/request', {
+          amount: amount,
+          phone_number: phoneNumber,
+          payer_message: `Payment for ${planId} plan`,
+          payee_note: `Subscription payment for ${planId}`
+        });
       
       console.log('Payment response:', response.data);
-      
-      toast({
-        title: "Payment Initiated",
-        description: `Your payment for the ${planId} plan has been initiated. Please complete the payment on your phone.`
-      });
-      
-      // Store the reference_id from the backend response for status checking
-      setReferenceId(response.data.reference_id);
+        
+        toast({
+          title: "Payment Initiated",
+          description: `Your payment for the ${planId} plan has been initiated. Please complete the payment on your phone.`
+        });
+        
+        // Store the reference_id from the backend response for status checking
+        setReferenceId(response.data.reference_id);
     } catch (error) {
       console.error('Payment error:', error);
       toast({

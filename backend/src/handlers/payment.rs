@@ -5,7 +5,8 @@ use crate::{
     services::payment::PaymentService,
 };
 use actix_web::{web, HttpResponse};
-use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
+use rust_decimal::prelude::ToPrimitive;
+use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, TransactionTrait};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize)]
@@ -55,21 +56,45 @@ pub async fn check_payment_status(
         .await?;
 
     println!("Payment status: {:?}", payment.status);
-    println!("Payment amount: {}", payment.amount);
+    println!("Payment amount (Decimal): {}", payment.amount);
 
     // If payment is successful, update subscription
     if format!("{:?}", payment.status) == "Successful" {
         println!("Payment successful, updating subscription");
-        // Determine plan based on payment amount
-        let amount: i64 = payment.amount.to_string().parse().unwrap_or(0);
-        let plan = if amount >= 10000 {
+        // Use Decimal to i64 conversion for amount
+        let amount: i64 = payment.amount.to_i64().unwrap_or(0);
+        println!("Parsed amount as i64: {}", amount);
+
+        let plan = if amount >= 1000 {
             "enterprise"
-        } else if amount >= 5000 {
+        } else if amount >= 500 {
             "premium"
         } else {
             "basic"
         };
-        println!("Updating to plan: {}", plan);
+        println!("Determined plan: {}", plan);
+
+        // First check current subscription
+        let current_sub = Subscription::find()
+            .filter(subscription::Column::UserId.eq(user.id))
+            .one(db.get_ref())
+            .await
+            .map_err(|e| {
+                println!("Error fetching current subscription: {}", e);
+                AppError::InternalServerError(format!("Failed to fetch subscription: {}", e))
+            })?;
+
+        if let Some(current_sub) = current_sub {
+            println!("Current subscription plan: {}", current_sub.plan);
+            println!("Current subscription status: {}", current_sub.status);
+        }
+
+        // Update subscription with transaction
+        let transaction = db.get_ref().begin().await.map_err(|e| {
+            println!("Error starting transaction: {}", e);
+            AppError::InternalServerError(format!("Failed to start transaction: {}", e))
+        })?;
+
         let update_result = Subscription::update_many()
             .col_expr(subscription::Column::Plan, plan.into())
             .col_expr(
@@ -78,13 +103,45 @@ pub async fn check_payment_status(
             )
             .col_expr(subscription::Column::Status, "active".into())
             .filter(subscription::Column::UserId.eq(user.id))
-            .exec(db.get_ref())
+            .exec(&transaction)
             .await;
 
         match update_result {
-            Ok(_) => println!("Subscription updated successfully"),
+            Ok(_) => {
+                println!("Subscription updated successfully to plan: {}", plan);
+                // Commit the transaction
+                transaction.commit().await.map_err(|e| {
+                    println!("Error committing transaction: {}", e);
+                    AppError::InternalServerError(format!("Failed to commit transaction: {}", e))
+                })?;
+
+                // Verify the update
+                let updated_sub = Subscription::find()
+                    .filter(subscription::Column::UserId.eq(user.id))
+                    .one(db.get_ref())
+                    .await
+                    .map_err(|e| {
+                        println!("Error verifying subscription update: {}", e);
+                        AppError::InternalServerError(format!(
+                            "Failed to verify subscription: {}",
+                            e
+                        ))
+                    })?;
+
+                if let Some(sub) = updated_sub {
+                    println!(
+                        "Verified updated subscription - Plan: {}, Status: {}",
+                        sub.plan, sub.status
+                    );
+                }
+            }
             Err(e) => {
                 println!("Failed to update subscription: {}", e);
+                // Rollback the transaction
+                transaction.rollback().await.map_err(|e| {
+                    println!("Error rolling back transaction: {}", e);
+                    AppError::InternalServerError(format!("Failed to rollback transaction: {}", e))
+                })?;
                 return Err(AppError::InternalServerError(format!(
                     "Failed to update subscription: {}",
                     e

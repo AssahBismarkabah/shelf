@@ -2794,6 +2794,7 @@ dependencies = [
  "futures-util",
  "jsonwebtoken",
  "mtnmomo",
+ "rust_decimal",
  "sanitize-filename",
  "sea-orm",
  "serde",

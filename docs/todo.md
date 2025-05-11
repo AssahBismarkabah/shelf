@@ -61,3 +61,8 @@
     - [ ] CI/CD setup
     - [ ] Production deployment
     - [ ] Final testing
+
+  - polish ui components and make the application beatiful with animations
+  - deploy application
+  - start advanced feature impl for auto reading pdf as audio with nice voice, llm analysis of pdf and sumary, file sharing between two users who are using the platform,
+  - fix storage update plan for basic and advanced

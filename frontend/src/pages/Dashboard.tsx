@@ -173,9 +173,10 @@ const Dashboard = () => {
                 className="group overflow-hidden rounded-lg border bg-card shadow-sm transition-all hover:shadow"
               >
                 <div className="relative aspect-[3/4] bg-muted">
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/5">
-                    <FileText className="h-16 w-16 text-muted-foreground/60" />
-                  </div>
+                  <PDFThumbnail
+                    documentId={document.id}
+                    className="w-full h-full object-cover rounded-t-lg" 
+                  />
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100">
                     <Link 
                       to={`/view/${document.id}`}

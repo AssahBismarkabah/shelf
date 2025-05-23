@@ -186,14 +186,14 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onClose }) => {
         
         {checkingSubscription ? (
           <div className="flex justify-center items-center h-40">
-            <div className="animate-spin h-8 w-8 border-4 border-shelf-400 border-t-transparent rounded-full" />
+            <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
             <p className="ml-2 text-muted-foreground">Checking subscription...</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit}>
             <div 
               className={`mb-4 flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors ${
-                dragActive ? 'border-shelf-400 bg-shelf-50' : 'border-border'
+                dragActive ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'
               }`}
               onDragEnter={handleDrag}
               onDragOver={handleDrag}
@@ -219,7 +219,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onClose }) => {
                     type="button" 
                     variant="outline" 
                     size="sm" 
-                    className="mt-2"
+                    className="mt-2 hover:bg-accent hover:text-accent-foreground"
                     onClick={() => setFile(null)}
                   >
                     Change file
@@ -236,6 +236,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onClose }) => {
                     type="button" 
                     variant="outline"
                     onClick={() => fileInputRef.current?.click()}
+                    className="hover:bg-accent hover:text-accent-foreground"
                   >
                     Browse files
                   </Button>
@@ -244,15 +245,22 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onClose }) => {
             </div>
             
             <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={onClose}>
+              <Button type="button" variant="outline" onClick={onClose} className="hover:bg-accent hover:text-accent-foreground">
                 Cancel
               </Button>
               <Button 
                 type="submit" 
-                className="bg-shelf-400 hover:bg-shelf-600"
+                className="bg-primary text-primary-foreground transition-all duration-200 ease-in-out hover:bg-primary/80 hover:scale-105 active:scale-95"
                 disabled={!file || uploading}
               >
-                {uploading ? "Uploading..." : "Upload"}
+                {uploading ? (
+                  <>
+                    <div className="animate-spin h-4 w-4 mr-2 border-2 border-current border-t-transparent rounded-full" />
+                    Uploading...
+                  </>
+                ) : (
+                  "Upload"
+                )}
               </Button>
             </div>
           </form>

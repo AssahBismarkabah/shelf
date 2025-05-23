@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Book, Search, Smartphone, ArrowRight, Check, ChevronRight } from 'lucide-react';
+import { Book, Search, Smartphone, ArrowRight, Check, ChevronRight, LibraryBig, UploadCloud, FolderKanban, FileSearch } from 'lucide-react';
 
 const Index = () => {
   const [videoOpen, setVideoOpen] = useState(false);
@@ -25,7 +25,15 @@ const Index = () => {
                 Your Documents, Reimagined
               </span>
               <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold bg-gradient-to-r from-shelf-600 via-shelf-500 to-blue-600 dark:from-shelf-400 dark:to-blue-500 text-transparent bg-clip-text pb-2">
-                Your Digital Library, Simplified
+                {["Your", "Digital", "Library,", "Simplified"].map((word, index) => (
+                  <span
+                    key={index}
+                    className="inline-block animate-fade-in" // Basic fade-in, delay will make it sequential
+                    style={{ animationDelay: `${index * 0.2 + 0.5}s`, animationFillMode: 'backwards' }}
+                  >
+                    {word}&nbsp;
+                  </span>
+                ))}
               </h1>
               <p className="text-xl sm:text-2xl text-muted-foreground max-w-2xl mx-auto mt-6">
                 Organize, read, and manage your PDFs with ease. Experience document management reimagined.
@@ -41,11 +49,17 @@ const Index = () => {
             </div>
             <div className="relative mt-16 w-full max-w-5xl">
               <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent z-10 h-[20%] bottom-0" />
-              <img 
-                src="https://images.unsplash.com/photo-1481627834876-b7833e8f5570?auto=format&fit=crop&q=80&w=1200"
-                alt="Shelf Dashboard" 
+              <div 
+                className={`w-full aspect-[16/9] md:aspect-[2/1] flex items-center justify-center bg-white/50 dark:bg-gray-800/30 rounded-xl border border-gray-200/50 shadow-2xl transition-all duration-1000 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-12 opacity-0'} hover:shadow-shelf-200/20 dark:border-gray-800 dark:hover:shadow-shelf-500/10`}
+              >
+                <LibraryBig className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 text-shelf-500 dark:text-shelf-400 hero-icon-float" />
+              </div>
+              {/* Fallback to placeholder image if needed, by commenting out the div above and uncommenting img below */}
+              {/* <img 
+                src="https://placehold.co/1200x800/e2e8f0/64748b?text=Product+Screenshot+Here"
+                alt="Product Preview Placeholder" 
                 className={`w-full rounded-xl border border-gray-200/50 shadow-2xl transition-all duration-1000 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-12 opacity-0'} hover:shadow-shelf-200/20 dark:border-gray-800 dark:hover:shadow-shelf-500/10`}
-              />
+              /> */}
             </div>
           </div>
         </div>
@@ -80,14 +94,19 @@ const Index = () => {
                 description: "Access your documents anywhere, anytime, on any device."
               }
             ].map((feature, index) => (
-              <div 
+              <div
                 key={index}
-                className="group relative overflow-hidden rounded-2xl bg-gradient-to-b from-shelf-50 to-white p-8 shadow-lg transition-all duration-300 hover:shadow-xl dark:from-gray-800 dark:to-gray-900 dark:hover:shadow-shelf-500/10"
+                className={`group relative overflow-hidden rounded-2xl bg-gradient-to-b from-shelf-50 to-white p-8 shadow-lg transition-all duration-500 ease-out hover:shadow-xl dark:from-gray-800 dark:to-gray-900 dark:hover:shadow-shelf-500/10 group-hover:-translate-y-1.5 ${
+                  isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+                }`}
+                style={{ transitionDelay: `${index * 150}ms` }}
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-shelf-100/0 via-shelf-100/5 to-shelf-100/0 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
                 <div className="relative">
-                  <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-shelf-100 text-shelf-600 transition-colors group-hover:bg-shelf-200 dark:bg-shelf-900 dark:text-shelf-400">
-                    {feature.icon}
+                  <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-shelf-100 text-shelf-600 transition-colors duration-300 group-hover:bg-shelf-200 dark:bg-shelf-900 dark:text-shelf-400">
+                    <span className="transition-transform duration-300 ease-in-out group-hover:scale-110 group-hover:rotate-3">
+                      {feature.icon}
+                    </span>
                   </div>
                   <h3 className="mb-3 text-xl font-semibold">{feature.title}</h3>
                   <p className="text-muted-foreground">{feature.description}</p>
@@ -107,42 +126,51 @@ const Index = () => {
               Simple, intuitive, and designed with you in mind.
             </p>
           </div>
-          <div className="mt-12 grid gap-8 md:grid-cols-3">
-            <div className="relative flex flex-col items-center text-center">
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-shelf-400 text-white">
-                1
+          <div className="mt-12 grid gap-x-8 gap-y-12 md:grid-cols-3">
+            {[
+              {
+                icon: <UploadCloud className="h-6 w-6 text-white" />,
+                title: "Upload",
+                description: "Drag and drop your PDFs or import from cloud storage.",
+                hasArrow: true
+              },
+              {
+                icon: <FolderKanban className="h-6 w-6 text-white" />,
+                title: "Organize",
+                description: "Let AI categorize and tag your documents automatically.",
+                hasArrow: true
+              },
+              {
+                icon: <FileSearch className="h-6 w-6 text-white" />,
+                title: "Access",
+                description: "Find and read your documents with our beautiful viewer.",
+                hasArrow: false
+              }
+            ].map((step, index) => (
+              <div 
+                key={index}
+                className={`relative flex flex-col items-center text-center transition-all duration-500 ease-out ${
+                  isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+                }`}
+                style={{ transitionDelay: `${index * 250}ms` }}
+              >
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-shelf-500 text-white shadow-lg">
+                  {step.icon}
+                </div>
+                <h4 className="mb-2 text-xl font-semibold text-shelf-700 dark:text-shelf-300">{step.title}</h4>
+                <p className="text-muted-foreground">{step.description}</p>
+                {step.hasArrow && (
+                  <div 
+                    className={`absolute right-0 top-5 hidden translate-x-1/2 transform md:block transition-all duration-500 ease-out ${
+                      isVisible ? 'opacity-100 translateX-0' : 'opacity-0 -translate-x-5'
+                    }`}
+                    style={{ transitionDelay: `${index * 250 + 125}ms` }}
+                  >
+                    <ArrowRight className="h-8 w-8 text-shelf-400 dark:text-shelf-500" />
+                  </div>
+                )}
               </div>
-              <h4 className="mb-2 font-medium">Upload</h4>
-              <p className="text-muted-foreground">
-                Drag and drop your PDFs or import from cloud storage.
-              </p>
-              {/* Arrow for desktop */}
-              <div className="absolute right-0 top-10 hidden translate-x-1/2 transform md:block">
-                <ArrowRight className="h-6 w-6 text-shelf-400" />
-              </div>
-            </div>
-            <div className="relative flex flex-col items-center text-center">
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-shelf-400 text-white">
-                2
-              </div>
-              <h4 className="mb-2 font-medium">Organize</h4>
-              <p className="text-muted-foreground">
-                Let AI categorize and tag your documents automatically.
-              </p>
-              {/* Arrow for desktop */}
-              <div className="absolute right-0 top-10 hidden translate-x-1/2 transform md:block">
-                <ArrowRight className="h-6 w-6 text-shelf-400" />
-              </div>
-            </div>
-            <div className="flex flex-col items-center text-center">
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-shelf-400 text-white">
-                3
-              </div>
-              <h4 className="mb-2 font-medium">Access</h4>
-              <p className="text-muted-foreground">
-                Find and read your documents with our beautiful viewer.
-              </p>
-            </div>
+            ))}
           </div>
         </div>
       </section>
@@ -156,64 +184,97 @@ const Index = () => {
               Choose the plan that's right for you.
             </p>
           </div>
-          <div className="mt-12 grid gap-8 md:grid-cols-2 lg:max-w-4xl lg:mx-auto">
-            <div className="pricing-card flex flex-col">
+          <div className="mt-12 grid gap-8 md:grid-cols-3 lg:max-w-6xl lg:mx-auto">
+            {/* Free Plan */}
+            <div className="pricing-card flex flex-col rounded-lg border p-6 shadow-sm transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-xl dark:border-gray-700 dark:bg-gray-800">
               <div className="mb-6">
                 <h3 className="text-2xl font-bold">Free</h3>
-                <p className="mt-2 text-4xl font-bold">$0</p>
-                <p className="mt-1 text-muted-foreground">Forever free</p>
+                <p className="mt-2 text-4xl font-bold">0 XAF<span className="text-lg font-normal text-muted-foreground">/month</span></p>
+                <p className="mt-1 text-muted-foreground">For basic needs</p>
               </div>
               <ul className="mb-6 space-y-3 flex-grow">
                 <li className="flex items-center">
-                  <Check className="mr-2 h-5 w-5 text-shelf-400" />
-                  <span>5GB Storage</span>
+                  <Check className="mr-2 h-5 w-5 text-green-500" />
+                  <span>100 MB Storage</span>
                 </li>
                 <li className="flex items-center">
-                  <Check className="mr-2 h-5 w-5 text-shelf-400" />
-                  <span>Basic Organization</span>
+                  <Check className="mr-2 h-5 w-5 text-green-500" />
+                  <span>Basic PDF storage</span>
                 </li>
                 <li className="flex items-center">
-                  <Check className="mr-2 h-5 w-5 text-shelf-400" />
-                  <span>Mobile Access</span>
+                  <Check className="mr-2 h-5 w-5 text-green-500" />
+                  <span>Limited features</span>
+                </li>
+                <li className="flex items-center">
+                  <Check className="mr-2 h-5 w-5 text-green-500" />
+                  <span>Community support</span>
                 </li>
               </ul>
-              <Button asChild>
+              <Button asChild variant="outline" className="transition-all duration-300 ease-in-out hover:scale-105 hover:bg-shelf-50 dark:hover:bg-shelf-800">
                 <Link to="/register">Get Started</Link>
               </Button>
             </div>
-            <div className="pricing-card relative flex flex-col overflow-hidden border-shelf-400">
-              <div className="absolute -right-12 top-7 w-40 rotate-45 bg-shelf-400 py-1 text-center text-sm text-white">
-                Popular
-              </div>
+
+            {/* Basic Plan */}
+            <div className="pricing-card flex flex-col rounded-lg border p-6 shadow-sm transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-xl dark:border-gray-700 dark:bg-gray-800">
               <div className="mb-6">
-                <h3 className="text-2xl font-bold">Pro</h3>
-                <p className="mt-2 text-4xl font-bold">$9.99</p>
-                <p className="mt-1 text-muted-foreground">per month</p>
+                <h3 className="text-2xl font-bold">Basic</h3>
+                <p className="mt-2 text-4xl font-bold">100 XAF<span className="text-lg font-normal text-muted-foreground">/month</span></p>
+                <p className="mt-1 text-muted-foreground">For growing needs</p>
               </div>
               <ul className="mb-6 space-y-3 flex-grow">
                 <li className="flex items-center">
-                  <Check className="mr-2 h-5 w-5 text-shelf-400" />
-                  <span>50GB Storage</span>
+                  <Check className="mr-2 h-5 w-5 text-green-500" />
+                  <span>1 GB Storage</span>
                 </li>
                 <li className="flex items-center">
-                  <Check className="mr-2 h-5 w-5 text-shelf-400" />
-                  <span>Advanced Organization</span>
+                  <Check className="mr-2 h-5 w-5 text-green-500" />
+                  <span>Basic PDF storage</span>
                 </li>
                 <li className="flex items-center">
-                  <Check className="mr-2 h-5 w-5 text-shelf-400" />
-                  <span>Mobile Access</span>
+                  <Check className="mr-2 h-5 w-5 text-green-500" />
+                  <span>Limited sharing</span>
                 </li>
                 <li className="flex items-center">
-                  <Check className="mr-2 h-5 w-5 text-shelf-400" />
-                  <span>Priority Support</span>
-                </li>
-                <li className="flex items-center">
-                  <Check className="mr-2 h-5 w-5 text-shelf-400" />
-                  <span>Advanced Search</span>
+                  <Check className="mr-2 h-5 w-5 text-green-500" />
+                  <span>Basic support</span>
                 </li>
               </ul>
-              <Button asChild className="bg-shelf-400 hover:bg-shelf-600">
-                <Link to="/register">Start Free Trial</Link>
+              <Button asChild className="bg-shelf-500 text-white transition-all duration-300 ease-in-out hover:scale-105 hover:bg-shelf-600 dark:bg-shelf-600 dark:hover:bg-shelf-700">
+                <Link to="/subscription">Choose Basic</Link>
+              </Button>
+            </div>
+
+            {/* Premium Plan */}
+            <div className="pricing-card relative flex flex-col overflow-hidden rounded-lg border-2 border-shelf-500 p-6 shadow-xl transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-2xl dark:border-shelf-400 dark:bg-gray-800">
+              <div className="absolute -right-11 top-6 w-36 rotate-45 bg-shelf-500 py-1.5 text-center text-sm font-semibold text-white dark:bg-shelf-400">
+                Popular
+              </div>
+              <div className="mb-6">
+                <h3 className="text-2xl font-bold">Premium</h3>
+                <p className="mt-2 text-4xl font-bold">500 XAF<span className="text-lg font-normal text-muted-foreground">/month</span></p>
+                <p className="mt-1 text-muted-foreground">For power users</p>
+              </div>
+              <ul className="mb-6 space-y-3 flex-grow">
+                <li className="flex items-center">
+                  <Check className="mr-2 h-5 w-5 text-green-500" />
+                  <span>5 GB Storage</span>
+                </li>
+                <li className="flex items-center">
+                  <Check className="mr-2 h-5 w-5 text-green-500" />
+                  <span>Advanced PDF management</span>
+                </li>
+                <li className="flex items-center">
+                  <Check className="mr-2 h-5 w-5 text-green-500" />
+                  <span>Enhanced sharing</span>
+                </li>
+                <li className="flex items-center">
+                  <Check className="mr-2 h-5 w-5 text-green-500" />
+                  <span>Priority support</span>
+                </li>
+              </ul>
+              <Button asChild className="bg-shelf-500 text-white transition-all duration-300 ease-in-out hover:scale-105 hover:bg-shelf-600 dark:bg-shelf-600 dark:hover:bg-shelf-700">
+                <Link to="/subscription">Choose Premium</Link>
               </Button>
             </div>
           </div>
@@ -230,7 +291,8 @@ const Index = () => {
             </p>
           </div>
           <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-            <div className="feature-card">
+            {/* Testimonial Card 1 */}
+            <div className="testimonial-card bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg transition-all duration-300 ease-in-out hover:shadow-xl hover:scale-105 hover:-rotate-1">
               <div className="mb-4 flex items-center gap-4">
                 <div className="h-12 w-12 overflow-hidden rounded-full bg-gray-200">
                   <img 
@@ -240,15 +302,16 @@ const Index = () => {
                   />
                 </div>
                 <div>
-                  <h5 className="font-medium">Dr. Sarah Johnson</h5>
-                  <p className="text-sm text-muted-foreground">Research Scientist</p>
+                  <h5 className="text-lg font-medium text-gray-900 dark:text-white">Dr. Sarah Johnson</h5>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Research Scientist</p>
                 </div>
               </div>
-              <p className="text-muted-foreground">
+              <p className="italic text-base text-gray-700 dark:text-gray-300">
                 "Shelf has transformed how I manage my research papers. The AI organization is a game-changer!"
               </p>
             </div>
-            <div className="feature-card">
+            {/* Testimonial Card 2 */}
+            <div className="testimonial-card bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg transition-all duration-300 ease-in-out hover:shadow-xl hover:scale-105 hover:-rotate-1">
               <div className="mb-4 flex items-center gap-4">
                 <div className="h-12 w-12 overflow-hidden rounded-full bg-gray-200">
                   <img 
@@ -258,15 +321,16 @@ const Index = () => {
                   />
                 </div>
                 <div>
-                  <h5 className="font-medium">Michael Chen</h5>
-                  <p className="text-sm text-muted-foreground">Student</p>
+                  <h5 className="text-lg font-medium text-gray-900 dark:text-white">Michael Chen</h5>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Student</p>
                 </div>
               </div>
-              <p className="text-muted-foreground">
+              <p className="italic text-base text-gray-700 dark:text-gray-300">
                 "As a student, I need to manage tons of PDFs. Shelf makes it simple and intuitive."
               </p>
             </div>
-            <div className="feature-card hidden lg:block">
+            {/* Testimonial Card 3 (Hidden on smaller screens, visible on lg) */}
+            <div className="testimonial-card hidden lg:block bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg transition-all duration-300 ease-in-out hover:shadow-xl hover:scale-105 hover:-rotate-1">
               <div className="mb-4 flex items-center gap-4">
                 <div className="h-12 w-12 overflow-hidden rounded-full bg-gray-200">
                   <img 
@@ -276,11 +340,11 @@ const Index = () => {
                   />
                 </div>
                 <div>
-                  <h5 className="font-medium">Emma Rodriguez</h5>
-                  <p className="text-sm text-muted-foreground">Business Analyst</p>
+                  <h5 className="text-lg font-medium text-gray-900 dark:text-white">Emma Rodriguez</h5>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Business Analyst</p>
                 </div>
               </div>
-              <p className="text-muted-foreground">
+              <p className="italic text-base text-gray-700 dark:text-gray-300">
                 "The search functionality is powerful! I can find any document within seconds now."
               </p>
             </div>
@@ -289,18 +353,28 @@ const Index = () => {
       </section>
 
       {/* CTA Section with Gradient */}
-      <section className="bg-shelf-400 py-16 text-white sm:py-20 lg:py-24">
+      <section className="bg-gradient-to-br from-shelf-500 to-shelf-700 py-16 text-white sm:py-20 lg:py-24">
         <div className="container px-4 sm:px-6">
           <div className="mx-auto max-w-3xl text-center">
-            <h2 className="font-bold">Ready to Get Started?</h2>
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Ready to Get Started?</h2>
             <p className="mt-4 text-lg text-white/80">
               Join thousands of users who trust Shelf for their document management needs.
             </p>
             <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-center">
-              <Button asChild size="lg" variant="secondary">
+              <Button 
+                asChild 
+                size="lg" 
+                variant="secondary" 
+                className="transition-all duration-300 ease-in-out hover:scale-105 hover:brightness-105"
+              >
                 <Link to="/register">Sign Up Free</Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="border-white text-white hover:bg-white/20">
+              <Button 
+                asChild 
+                size="lg" 
+                variant="outline" 
+                className="border-white text-white transition-all duration-300 ease-in-out hover:scale-105 hover:bg-white/20"
+              >
                 <Link to="/login">Sign In</Link>
               </Button>
             </div>

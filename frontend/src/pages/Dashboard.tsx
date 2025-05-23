@@ -79,7 +79,7 @@ const Dashboard = () => {
       }
     };
     fetchSubscription();
-  }, [toast]);
+  }, [toast, documents]);
   
   const filteredDocuments = documents.filter(doc => 
     doc.filename.toLowerCase().includes(searchQuery.toLowerCase())

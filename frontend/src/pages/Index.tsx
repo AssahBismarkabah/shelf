@@ -52,7 +52,7 @@ const Index = () => {
               <div 
                 className={`w-full aspect-[16/9] md:aspect-[2/1] flex items-center justify-center bg-white/50 dark:bg-gray-800/30 rounded-xl border border-gray-200/50 shadow-2xl transition-all duration-1000 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-12 opacity-0'} hover:shadow-shelf-200/20 dark:border-gray-800 dark:hover:shadow-shelf-500/10`}
               >
-                <LibraryBig className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 text-shelf-500 dark:text-shelf-400" />
+                <LibraryBig className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 text-shelf-500 dark:text-shelf-400 hero-icon-float" />
               </div>
               {/* Fallback to placeholder image if needed, by commenting out the div above and uncommenting img below */}
               {/* <img 

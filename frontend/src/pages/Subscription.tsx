@@ -111,35 +111,45 @@ const Subscription = () => {
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-gray-900/95">
       <div className="flex-grow max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-5xl mb-4">Choose Your Plan</h1>
-          <p className="text-xl text-muted-foreground">Select the perfect plan for your PDF storage needs</p>
+        <div className="text-center mb-16">
+          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-gray-900 dark:text-white mb-4">Choose Your Plan</h1>
+          <p className="mt-4 text-xl text-muted-foreground">Select the perfect plan for your PDF storage needs</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {plans.map((plan) => (
-            <div key={plan.name} className={`relative rounded-2xl shadow-lg overflow-hidden border ${currentPlan === plan.planId ? 'border-shelf-500 border-2' : 'border-gray-200 dark:border-gray-700'}`}>
+            <div 
+              key={plan.name} 
+              className={`
+                relative rounded-2xl shadow-lg overflow-hidden 
+                transition-all duration-300 ease-in-out
+                ${currentPlan === plan.planId 
+                  ? 'border-shelf-500 border-2 bg-shelf-50/50 dark:bg-shelf-900/30' 
+                  : 'border border-gray-200 dark:border-gray-700 hover:scale-105 hover:shadow-xl'
+                }
+              `}
+            >
               {currentPlan === plan.planId && (
-                <div className="absolute top-0 w-full bg-shelf-500 text-white text-center py-1 text-sm font-medium">Current Plan</div>
+                <div className="absolute top-0 left-0 right-0 bg-shelf-500 text-white text-center py-1.5 px-4 text-sm font-semibold">Current Plan</div>
               )}
-              <div className={`p-6 ${currentPlan === plan.planId ? 'pt-8' : ''}`}>
+              <div className={`p-8 ${currentPlan === plan.planId ? 'pt-12' : ''}`}> {/* Increased top padding for active plan banner */}
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{plan.name}</h2>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{plan.price}</p>
-                <p className="text-muted-foreground mb-4">Storage: {plan.storage}</p>
+                <p className="text-4xl font-extrabold text-gray-900 dark:text-white my-2">{plan.price}</p>
+                <p className="text-sm text-muted-foreground mb-6">Storage: {plan.storage}</p>
                 <ul className="space-y-3 mb-6">
                   {plan.features.map((feature, index) => (
-                    <li key={index} className="flex items-start">
-                      <CheckCircle className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
+                    <li key={index} className="flex items-start text-sm">
+                      <CheckCircle className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
                       <span>{feature}</span>
                     </li>
                   ))}
                 </ul>
                 <Button 
-                  className="w-full bg-shelf-400 hover:bg-shelf-600" 
+                  className="w-full bg-shelf-400 transition-all duration-300 ease-in-out hover:scale-105 hover:bg-shelf-500 disabled:opacity-50" 
                   onClick={() => handleUpgrade(plan.planId)}
-                  disabled={currentPlan === plan.planId}
+                  disabled={currentPlan === plan.planId || plan.planId === 'none'}
                 >
                   {currentPlan === plan.planId ? 'Active' : 'Select Plan'}
                   <CreditCard className="ml-2 h-4 w-4" />

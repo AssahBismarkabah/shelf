@@ -24,9 +24,8 @@ RUN apt-get update && \
     apt-get install -y ca-certificates libssl3 && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy the built binary and .env file
+# Copy the built binary
 COPY --from=builder /usr/src/app/target/release/pdf-shelf .
-COPY --from=builder /usr/src/app/.env .
 
 # Expose the port the app runs on
 EXPOSE 8080

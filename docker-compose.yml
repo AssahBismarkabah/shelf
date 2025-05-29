@@ -15,17 +15,24 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: pdf_shelf_api
+    env_file:
+      - .env
     environment:
-      DATABASE_URL: postgres://pdfshelf:pdfshelf123@db:5432/pdfshelf
-      MINIO_ENDPOINT: http://minio:9000
-      MINIO_ACCESS_KEY: pdfshelf
-      MINIO_SECRET_KEY: pdfshelf123
-      MINIO_BUCKET: pdfshelf
-      AWS_ACCESS_KEY_ID: pdfshelf
-      AWS_SECRET_ACCESS_KEY: pdfshelf123
-      AWS_REGION: us-east-1
-      AWS_ENDPOINT_URL: http://minio:9000
-      JWT_SECRET: shelf_jwt_secret_key_2024_secure_token
+      DATABASE_URL: ${DATABASE_URL}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_BUCKET: ${MINIO_BUCKET}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_REGION: ${AWS_REGION}
+      AWS_ENDPOINT_URL: ${AWS_ENDPOINT_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      MTN_URL: ${MTN_URL}
+      MTN_COLLECTION_PRIMARY_KEY: ${MTN_COLLECTION_PRIMARY_KEY}
+      MTN_COLLECTION_SECONDARY_KEY: ${MTN_COLLECTION_SECONDARY_KEY}
+      MTN_CALLBACK_URL: ${MTN_CALLBACK_URL}
+      MTN_CURRENCY: ${MTN_CURRENCY}
     ports:
       - "8080:8080"
     depends_on:
@@ -42,17 +49,19 @@ services:
   db:
     image: postgres:15-alpine
     container_name: pdf_shelf_postgres
+    env_file:
+      - .env
     environment:
-      POSTGRES_USER: pdfshelf
-      POSTGRES_PASSWORD: pdfshelf123
-      POSTGRES_DB: pdfshelf
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U pdfshelf"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -63,9 +72,11 @@ services:
   minio:
     image: minio/minio
     container_name: pdf_shelf_minio
+    env_file:
+      - .env
     environment:
-      MINIO_ROOT_USER: pdfshelf
-      MINIO_ROOT_PASSWORD: pdfshelf123
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -86,14 +97,16 @@ services:
     depends_on:
       minio:
         condition: service_healthy
+    env_file:
+      - .env
     environment:
-      MINIO_ROOT_USER: pdfshelf
-      MINIO_ROOT_PASSWORD: pdfshelf123
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     entrypoint: ["/bin/sh", "-c"]
     command: >
-      "mc alias set myminio http://minio:9000 pdfshelf pdfshelf123 &&
-      mc mb myminio/pdfshelf --ignore-existing &&
-      mc policy set public myminio/pdfshelf"
+      "mc alias set myminio http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD} &&
+      mc mb myminio/${MINIO_BUCKET} --ignore-existing &&
+      mc policy set public myminio/${MINIO_BUCKET}"
     restart: on-failure
     networks:
       - shelf-network
@@ -101,9 +114,11 @@ services:
   pgadmin:
     image: dpage/pgadmin4
     container_name: pgadmin
+    env_file:
+      - .env
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
     ports:
       - "5050:80"
     depends_on:

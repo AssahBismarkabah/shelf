@@ -71,10 +71,11 @@ jobs:
         run: |
           echo "🚀 Deploying PDF Shelf to Render..."
           
-          # Deploy using blueprint
-          render blueprint launch --output json --confirm
+          # Assuming render.yaml is picked up by Render due to the push to main.
+          # The services will be created/updated based on the blueprint.
+          # We will then get their IDs and wait for their individual deployments.
           
-          echo " Blueprint deployment initiated"
+          echo " Blueprint processing by Render initiated by git push..."
 
       - name: Get service information
         env:

@@ -31,6 +31,17 @@ jobs:
           curl -fsSL https://raw.githubusercontent.com/render-oss/cli/refs/heads/main/bin/install.sh | sh
           render --version
 
+      - name: Set Render Workspace
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_WORKSPACE: ${{ secrets.RENDER_WORKSPACE }} # Add your Render Workspace Name or ID as a secret
+        run: |
+          if [ -z "${RENDER_WORKSPACE}" ]; then
+            echo " RENDER_WORKSPACE secret is not set. Please set it to your Render Workspace Name or ID."
+            exit 1
+          fi
+          render workspace set "${RENDER_WORKSPACE}"
+
       - name: Validate required secrets
         run: |
           if [ -z "${{ secrets.RENDER_API_KEY }}" ]; then
@@ -74,7 +85,7 @@ jobs:
           # Assuming render.yaml is picked up by Render due to the push to main.
           # The services will be created/updated based on the blueprint.
           # We will then get their IDs and wait for their individual deployments.
-          
+
           echo " Blueprint processing by Render initiated by git push..."
 
       - name: Get service information

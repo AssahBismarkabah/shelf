@@ -40,7 +40,7 @@ jobs:
             echo " RENDER_WORKSPACE secret is not set. Please set it to your Render Workspace Name or ID."
             exit 1
           fi
-          render workspace set "${RENDER_WORKSPACE}"
+          render workspace set "${RENDER_WORKSPACE}" --output text --confirm
 
       - name: Validate required secrets
         run: |

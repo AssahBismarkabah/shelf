@@ -1,0 +1,85 @@
+services:
+  - type: web
+    name: pdf-shelf-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: starter
+    region: oregon
+    branch: main
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: pdf-shelf-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: RUST_LOG
+        value: info
+      # AWS/S3 Configuration - These must be set manually in Render Dashboard
+      # Go to Service Settings > Environment and add these variables:
+      - key: AWS_ACCESS_KEY_ID
+        # Set this value manually in Render Dashboard with your AWS access key
+      - key: AWS_SECRET_ACCESS_KEY
+        # Set this value manually in Render Dashboard with your AWS secret key
+      - key: AWS_REGION
+        value: us-east-1
+      - key: AWS_S3_BUCKET
+        # Set this value manually in Render Dashboard with your S3 bucket name
+      - key: AWS_ENDPOINT_URL
+        value: https://s3.amazonaws.com
+      # MinIO-compatible variables (for backward compatibility with Rust code)
+      # These point to the same AWS credentials but use MinIO variable names
+      - key: MINIO_ENDPOINT
+        value: s3.amazonaws.com
+      - key: MINIO_ACCESS_KEY
+        # This should match AWS_ACCESS_KEY_ID - set manually
+      - key: MINIO_SECRET_KEY
+        # This should match AWS_SECRET_ACCESS_KEY - set manually
+      - key: MINIO_BUCKET
+        # This should match AWS_S3_BUCKET - set manually
+      # MTN MoMo Configuration
+      - key: MTN_URL
+        value: https://sandbox.momodeveloper.mtn.com
+      - key: MTN_COLLECTION_PRIMARY_KEY
+        # Set this value manually in Render Dashboard with your MTN primary key
+      - key: MTN_COLLECTION_SECONDARY_KEY
+        # Set this value manually in Render Dashboard with your MTN secondary key
+      - key: MTN_CALLBACK_URL
+        # This will be auto-generated as: https://pdf-shelf-api.onrender.com/api/payments/callback
+        fromService:
+          type: web
+          name: pdf-shelf-api
+          property: url
+      - key: MTN_CURRENCY
+        value: EU
+
+  - type: web
+    name: pdf-shelf-frontend
+    runtime: static
+    buildCommand: npm ci && npm run build
+    pullRequestPreviewsEnabled: true
+    plan: free
+    region: oregon
+    branch: main
+    rootDir: ./frontend
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: pdf-shelf-api
+          property: url
+      - key: REACT_APP_API_URL
+        fromService:
+          type: web
+          name: pdf-shelf-api
+          property: url
+
+databases:
+  - name: pdf-shelf-db
+    plan: free
+    databaseName: pdfshelf
+    user: pdfshelf
+    region: oregon

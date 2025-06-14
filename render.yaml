@@ -66,13 +66,13 @@ services:
     staticPublishPath: dist # Changed: Correct property name for publish directory
     envVars:
       - key: VITE_API_URL
-        value: SET_IN_DASHBOARD_FRONTEND_API_URL # Set this in Render Dashboard. Use ${pdf_shelf_api.RENDER_EXTERNAL_URL}
+        value: ${pdf-shelf-api.RENDER_EXTERNAL_URL} # Dynamically uses the backend URL
       # - fromService:
       #     type: web
       #     name: pdf-shelf-api
       #     property: host # 'url' property is not directly available
       - key: REACT_APP_API_URL
-        value: SET_IN_DASHBOARD_FRONTEND_API_URL # Set this in Render Dashboard. Use ${pdf_shelf_api.RENDER_EXTERNAL_URL}
+        value: ${pdf-shelf-api.RENDER_EXTERNAL_URL} # Dynamically uses the backend URL
       # - fromService:
       #     type: web
       #     name: pdf-shelf-api

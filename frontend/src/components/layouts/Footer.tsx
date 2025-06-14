@@ -67,24 +67,8 @@ export default function Footer() {
           <div>
             <h3 className="text-lg font-semibold mb-4">Connect With Us</h3>
             <div className="flex space-x-4 mb-4">
-              <a 
-                href="https://github.com/lovable-dev" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="group p-2 rounded-full bg-card hover:bg-primary/10 transition-all duration-200 ease-in-out hover:scale-110"
-              >
-                <Github className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                <span className="sr-only">GitHub</span>
-              </a>
-              <a 
-                href="https://docs.lovable.dev/" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="group p-2 rounded-full bg-card hover:bg-primary/10 transition-all duration-200 ease-in-out hover:scale-110"
-              >
-                <FileText className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                <span className="sr-only">Documentation</span>
-              </a>
+              {/* GitHub link removed as per request */}
+              {/* Documentation link removed as per request */}
               <a 
                 href="mailto:info@shelf.app" 
                 className="group p-2 rounded-full bg-card hover:bg-primary/10 transition-all duration-200 ease-in-out hover:scale-110"

@@ -33,7 +33,7 @@ services:
       # MinIO-compatible variables (for backward compatibility with Rust code)
       # These point to the same AWS credentials but use MinIO variable names
       - key: MINIO_ENDPOINT
-        value: s3.amazonaws.com
+        value: https://s3.amazonaws.com
       - key: MINIO_ACCESS_KEY
         value: SET_IN_DASHBOARD # This should match AWS_ACCESS_KEY_ID - set manually
       - key: MINIO_SECRET_KEY

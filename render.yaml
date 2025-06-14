@@ -69,13 +69,13 @@ services:
     staticPublishPath: dist # Changed: Correct property name for publish directory
     envVars:
       - key: VITE_API_URL
-        value: https://pdf-shelf-api.onrender.com
+        value: https://pdf-shelf-api.onrender.com/api
       # - fromService:
       #     type: web
       #     name: pdf-shelf-api
       #     property: host # 'url' property is not directly available
       - key: REACT_APP_API_URL
-        value: https://pdf-shelf-api.onrender.com
+        value: https://pdf-shelf-api.onrender.com/api
       # - fromService:
       #     type: web
       #     name: pdf-shelf-api

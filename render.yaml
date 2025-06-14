@@ -21,13 +21,13 @@ services:
       # AWS/S3 Configuration - These must be set manually in Render Dashboard
       # Go to Service Settings > Environment and add these variables:
       - key: AWS_ACCESS_KEY_ID
-        # Set this value manually in Render Dashboard with your AWS access key
+        value: SET_IN_DASHBOARD # Set this value manually in Render Dashboard
       - key: AWS_SECRET_ACCESS_KEY
-        # Set this value manually in Render Dashboard with your AWS secret key
+        value: SET_IN_DASHBOARD # Set this value manually in Render Dashboard
       - key: AWS_REGION
         value: us-east-1
       - key: AWS_S3_BUCKET
-        # Set this value manually in Render Dashboard with your S3 bucket name
+        value: SET_IN_DASHBOARD # Set this value manually in Render Dashboard
       - key: AWS_ENDPOINT_URL
         value: https://s3.amazonaws.com
       # MinIO-compatible variables (for backward compatibility with Rust code)
@@ -35,24 +35,24 @@ services:
       - key: MINIO_ENDPOINT
         value: s3.amazonaws.com
       - key: MINIO_ACCESS_KEY
-        # This should match AWS_ACCESS_KEY_ID - set manually
+        value: SET_IN_DASHBOARD # This should match AWS_ACCESS_KEY_ID - set manually
       - key: MINIO_SECRET_KEY
-        # This should match AWS_SECRET_ACCESS_KEY - set manually
+        value: SET_IN_DASHBOARD # This should match AWS_SECRET_ACCESS_KEY - set manually
       - key: MINIO_BUCKET
-        # This should match AWS_S3_BUCKET - set manually
+        value: SET_IN_DASHBOARD # This should match AWS_S3_BUCKET - set manually
       # MTN MoMo Configuration
       - key: MTN_URL
         value: https://sandbox.momodeveloper.mtn.com
       - key: MTN_COLLECTION_PRIMARY_KEY
-        # Set this value manually in Render Dashboard with your MTN primary key
+        value: SET_IN_DASHBOARD # Set this value manually in Render Dashboard
       - key: MTN_COLLECTION_SECONDARY_KEY
-        # Set this value manually in Render Dashboard with your MTN secondary key
+        value: SET_IN_DASHBOARD # Set this value manually in Render Dashboard
       - key: MTN_CALLBACK_URL
-        # This will be auto-generated as: https://pdf-shelf-api.onrender.com/api/payments/callback
-        fromService:
-          type: web
-          name: pdf-shelf-api
-          property: url
+        value: SET_IN_DASHBOARD_CALLBACK_URL # Set this in Render Dashboard. Use ${RENDER_EXTERNAL_URL}/api/payments/callback (where RENDER_EXTERNAL_URL is for this 'pdf-shelf-api' service)
+      # - fromService: # 'url' property is not directly available, RENDER_EXTERNAL_URL is preferred
+      #     type: web
+      #     name: pdf-shelf-api
+      #     property: host # Use host and construct, or rely on RENDER_EXTERNAL_URL
       - key: MTN_CURRENCY
         value: EU
 
@@ -62,20 +62,22 @@ services:
     buildCommand: npm ci && npm run build
     pullRequestPreviewsEnabled: true
     plan: free
-    region: oregon
+    # region: oregon # Static sites cannot have a region
     branch: main
     rootDir: ./frontend
     envVars:
       - key: VITE_API_URL
-        fromService:
-          type: web
-          name: pdf-shelf-api
-          property: url
+        value: SET_IN_DASHBOARD_FRONTEND_API_URL # Set this in Render Dashboard. Use ${pdf_shelf_api.RENDER_EXTERNAL_URL}
+      # - fromService:
+      #     type: web
+      #     name: pdf-shelf-api
+      #     property: host # 'url' property is not directly available
       - key: REACT_APP_API_URL
-        fromService:
-          type: web
-          name: pdf-shelf-api
-          property: url
+        value: SET_IN_DASHBOARD_FRONTEND_API_URL # Set this in Render Dashboard. Use ${pdf_shelf_api.RENDER_EXTERNAL_URL}
+      # - fromService:
+      #     type: web
+      #     name: pdf-shelf-api
+      #     property: host # 'url' property is not directly available
 
 databases:
   - name: pdf-shelf-db

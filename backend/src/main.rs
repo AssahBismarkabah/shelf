@@ -6,6 +6,7 @@ use handlers::payment::{check_payment_status, request_payment};
 use handlers::subscription::{update_subscription, get_subscription};
 use services::payment::PaymentService;
 use std::env;
+use sea_orm_migration::MigratorTrait;
 
 mod config;
 mod error;
@@ -13,6 +14,7 @@ mod handlers;
 mod middleware;
 mod models;
 mod services;
+use migration::Migrator;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -39,6 +41,11 @@ async fn main() -> std::io::Result<()> {
     let payment_service = PaymentService::new(pool.clone())
         .await
         .expect("Failed to initialize payment service");
+
+    // Run migrations
+    Migrator::up(&pool, None)
+        .await
+        .expect("Failed to run database migrations");
 
     println!("Starting server at http://0.0.0.0:8080");
 

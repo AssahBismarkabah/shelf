@@ -61,8 +61,6 @@ services:
     runtime: static
     buildCommand: npm ci && npm run build
     pullRequestPreviewsEnabled: true
-    plan: free
-    # region: oregon # Static sites cannot have a region
     branch: main
     rootDir: ./frontend
     envVars:

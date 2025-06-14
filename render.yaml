@@ -10,6 +10,8 @@ services:
     healthCheckPath: /health
     autoDeploy: true
     envVars:
+      - key: PORT
+        value: "8080"
       - key: DATABASE_URL
         fromDatabase:
           name: pdf-shelf-db
@@ -25,9 +27,10 @@ services:
       - key: AWS_SECRET_ACCESS_KEY
         value: SET_IN_DASHBOARD # Set this value manually in Render Dashboard
       - key: AWS_REGION
-        value: us-east-1
-      - key: AWS_S3_BUCKET
-        value: SET_IN_DASHBOARD # Set this value manually in Render Dashboard
+        value: us-west-2
+      - key: S3_BUCKET_NAME
+        value: ocss-sh
+
       - key: AWS_ENDPOINT_URL
         value: https://s3.amazonaws.com
       # MinIO-compatible variables (for backward compatibility with Rust code)
@@ -66,13 +69,13 @@ services:
     staticPublishPath: dist # Changed: Correct property name for publish directory
     envVars:
       - key: VITE_API_URL
-        value: ${pdf-shelf-api.RENDER_EXTERNAL_URL} # Dynamically uses the backend URL
+        value: https://pdf-shelf-api.onrender.com
       # - fromService:
       #     type: web
       #     name: pdf-shelf-api
       #     property: host # 'url' property is not directly available
       - key: REACT_APP_API_URL
-        value: ${pdf-shelf-api.RENDER_EXTERNAL_URL} # Dynamically uses the backend URL
+        value: https://pdf-shelf-api.onrender.com
       # - fromService:
       #     type: web
       #     name: pdf-shelf-api

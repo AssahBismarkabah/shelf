@@ -1,6 +1,6 @@
 use crate::services::storage::StorageService;
 use actix_cors::Cors;
-use actix_web::{web, App, HttpServer};
+use actix_web::{web, App, HttpServer, HttpResponse, Responder};
 use actix_web_httpauth::middleware::HttpAuthentication;
 use handlers::payment::{check_payment_status, request_payment};
 use handlers::subscription::{update_subscription, get_subscription};
@@ -56,6 +56,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(pool.clone()))
             .app_data(web::Data::new(storage.clone()))
             .app_data(web::Data::new(payment_service.clone()))
+            .route("/health", web::get().to(health_check)) //  health check route for render serivce
             .service(
                 web::scope("/api")
                     .service(
@@ -104,4 +105,9 @@ async fn main() -> std::io::Result<()> {
     .bind("0.0.0.0:8080")?
     .run()
     .await
+}
+
+// Health check handler
+async fn health_check() -> impl Responder {
+    HttpResponse::Ok().finish()
 }

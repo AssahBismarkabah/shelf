@@ -33,7 +33,7 @@ export default function PDFThumbnail({ documentId, className, isList = false }: 
           return;
         }
 
-        const response = await fetch(`/api/documents/${documentId}`, {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/documents/${documentId}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }

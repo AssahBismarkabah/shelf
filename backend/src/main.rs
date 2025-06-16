@@ -31,6 +31,7 @@ async fn main() -> std::io::Result<()> {
     let storage = StorageService::new(
         env::var("MINIO_ENDPOINT").expect("MINIO_ENDPOINT must be set"),
         env::var("MINIO_BUCKET").expect("MINIO_BUCKET must be set"),
+        env::var("AWS_REGION").expect("AWS_REGION must be set"),
     )
     .await
     .expect("Failed to initialize storage service");

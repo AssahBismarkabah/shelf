@@ -18,13 +18,16 @@ pub struct StorageService {
 }
 
 impl StorageService {
-    pub async fn new(endpoint: String, bucket: String) -> Result<Self, Box<dyn Error>> {
+    pub async fn new(endpoint: String, bucket: String, region_str: String) -> Result<Self, Box<dyn Error>> {
         println!("Initializing storage service with endpoint: {}", endpoint);
         println!("Using bucket: {}", bucket);
+        println!("Using region: {}", region_str);
+
+        let region = Region::new(region_str);
 
         let config = aws_config::defaults(aws_config::BehaviorVersion::latest())
             .endpoint_url(endpoint)
-            .region(Region::new("us-east-1"))
+            .region(region)
             .load()
             .await;
 

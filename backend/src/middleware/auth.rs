@@ -25,6 +25,11 @@ pub async fn validator(
     req: ServiceRequest,
     credentials: BearerAuth,
 ) -> Result<ServiceRequest, (Error, ServiceRequest)> {
+    // Skip authentication for OPTIONS requests (CORS preflight)
+    if req.method() == actix_web::http::Method::OPTIONS {
+        return Ok(req);
+    }
+    
     let token = credentials.token();
     let jwt_secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
 

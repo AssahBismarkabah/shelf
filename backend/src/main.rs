@@ -48,8 +48,8 @@ async fn main() -> std::io::Result<()> {
 
         // Configure CORS
         let cors = Cors::permissive()
-            .allowed_methods(vec!["GET", "POST", "PUT", "DELETE"])
-            .allowed_headers(vec!["Authorization", "Content-Type"])
+            .allowed_methods(vec!["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+            .allowed_headers(vec!["Authorization", "Content-Type", "Cache-Control"])
             .supports_credentials();
 
         App::new()

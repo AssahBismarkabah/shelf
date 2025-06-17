@@ -25,16 +25,25 @@ pub async fn upload_document(
             .map(|f| sanitize(f))
             .ok_or_else(|| actix_web::error::ErrorBadRequest("No filename provided"))?;
 
-        let content_type = field
-            .content_type()
-            .map(|t| t.to_string())
-            .unwrap_or_else(|| "application/octet-stream".to_string());
-
         // Get the file extension
         let extension = Path::new(&filename)
             .extension()
             .and_then(|ext| ext.to_str())
             .unwrap_or("");
+
+        let content_type = field
+            .content_type()
+            .map(|t| t.to_string())
+            .unwrap_or_else(|| {
+                // Set proper MIME type based on file extension
+                match extension.to_lowercase().as_str() {
+                    "pdf" => "application/pdf".to_string(),
+                    "doc" => "application/msword".to_string(),
+                    "docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document".to_string(),
+                    "txt" => "text/plain".to_string(),
+                    _ => "application/octet-stream".to_string(),
+                }
+            });
 
         // Include the file extension in the S3 key
         let s3_key = format!("{}/{}.{}", user.id, Uuid::new_v4(), extension);
@@ -129,13 +138,25 @@ pub async fn download_document(
         .await
         .map_err(|e| actix_web::error::ErrorInternalServerError(e))?;
 
+    // Set proper content type for PDFs and serve inline for viewing
+    let content_type = if document.mime_type.contains("pdf") {
+        "application/pdf"
+    } else {
+        &document.mime_type
+    };
+
+    let content_disposition = if document.mime_type.contains("pdf") {
+        format!("inline; filename=\"{}\"", document.filename)
+    } else {
+        format!("attachment; filename=\"{}\"", document.filename)
+    };
+
     Ok(HttpResponse::Ok()
-        .append_header((
-            "Content-Disposition",
-            format!("attachment; filename=\"{}\"", document.filename),
-        ))
-        .append_header(("Content-Type", document.mime_type))
+        .append_header(("Content-Disposition", content_disposition))
+        .append_header(("Content-Type", content_type))
         .append_header(("Content-Length", document.file_size.to_string()))
+        .append_header(("Cache-Control", "no-cache"))
+        .append_header(("Accept-Ranges", "bytes"))
         .streaming(stream))
 }
 

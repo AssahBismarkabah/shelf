@@ -53,7 +53,7 @@ const ViewPDF = () => {
     
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/documents/${document.id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/documents/${document.id}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -169,7 +169,7 @@ const ViewPDF = () => {
         <div className="flex-1 overflow-auto bg-muted/30 p-4">
             <div className="mx-auto max-w-3xl">
             <PDFViewer
-              url={`${import.meta.env.VITE_API_URL}/documents/${document.id}`}
+              url={`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/documents/${document.id}`}
               scale={zoom}
               pageNumber={currentPage}
               onLoadSuccess={setTotalPages}

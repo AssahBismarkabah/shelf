@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
+import type { PDFDocumentProxy } from 'pdfjs-dist';
 import { FileText } from 'lucide-react';
 
 // Initialize PDF.js worker
@@ -23,7 +24,7 @@ const PDFViewer = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [pdfDoc, setPdfDoc] = useState<any>(null);
+  const [pdfDoc, setPdfDoc] = useState<PDFDocumentProxy | null>(null);
 
   useEffect(() => {
     const loadPDF = async () => {
@@ -37,26 +38,53 @@ const PDFViewer = ({
           throw new Error('No authentication token found');
         }
 
-        // Fetch the PDF with authentication
+        // Fetch the PDF with authentication and proper headers
         const response = await fetch(url, {
+          method: 'GET',
           headers: {
-            'Authorization': `Bearer ${token}`
-          }
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/pdf,*/*',
+            'Cache-Control': 'no-cache'
+          },
+          cache: 'no-cache'
         });
 
         if (!response.ok) {
-          throw new Error(`Failed to load PDF: ${response.statusText}`);
+          throw new Error(`Failed to load PDF: ${response.status} ${response.statusText}`);
+        }
+
+        // Verify content type
+        const contentType = response.headers.get('content-type');
+        if (contentType && !contentType.includes('pdf') && !contentType.includes('octet-stream')) {
+          console.warn('Unexpected content type:', contentType);
         }
 
         const arrayBuffer = await response.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        
+        // Validate that we have actual PDF data
+        if (arrayBuffer.byteLength === 0) {
+          throw new Error('Empty PDF file received');
+        }
+
+        // Check for PDF signature
+        const uint8Array = new Uint8Array(arrayBuffer);
+        const pdfSignature = String.fromCharCode(...uint8Array.slice(0, 4));
+        if (pdfSignature !== '%PDF') {
+          console.error('Invalid PDF signature:', pdfSignature);
+          throw new Error('Invalid PDF file format');
+        }
+
+        const pdf = await pdfjsLib.getDocument({ 
+          data: arrayBuffer,
+          verbosity: 0 // Reduce console warnings
+        }).promise;
         
         setPdfDoc(pdf);
         if (onLoadSuccess) {
           onLoadSuccess(pdf.numPages);
         }
       } catch (err) {
-        console.error('Error loading PDF:', err);
+        console.error('Error processing PDF:', err);
         setError(err instanceof Error ? err.message : 'Failed to load PDF');
       } finally {
         setLoading(false);
@@ -121,4 +149,4 @@ const PDFViewer = ({
   );
 };
 
-export default PDFViewer; 
+export default PDFViewer;

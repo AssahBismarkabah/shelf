@@ -3,7 +3,7 @@ import { FileText } from "lucide-react";
 import * as pdfjsLib from "pdfjs-dist";
 
 // Set the worker source path
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
 
 interface PDFThumbnailProps {
   documentId: number;
